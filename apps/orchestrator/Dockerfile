@@ -14,6 +14,5 @@ COPY node_modules ./node_modules
 RUN chmod +x /app/apps/orchestrator/entrypoint.sh && \
     ln -sf /app/node_modules/.bin/tsx /usr/local/bin/tsx 2>/dev/null || true
 
-USER node
 WORKDIR /app
 ENTRYPOINT ["./apps/orchestrator/entrypoint.sh"]
