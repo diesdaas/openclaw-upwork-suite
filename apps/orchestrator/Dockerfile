@@ -7,18 +7,21 @@ RUN groupadd --gid 1001 appuser \
     && chown -R appuser:appuser /app
 
 COPY node_modules ./node_modules
+COPY packages ./packages
 COPY apps/orchestrator/src ./apps/orchestrator/src
+COPY apps/orchestrator/node_modules ./apps/orchestrator/node_modules
 COPY apps/orchestrator/package.json ./apps/orchestrator/
 COPY apps/orchestrator/.env.example ./apps/orchestrator/.env
 COPY apps/orchestrator/data ./apps/orchestrator/data
-COPY packages ./packages
 COPY turbo.json ./turbo.json
 COPY pnpm-workspace.yaml ./
 COPY pnpm-lock.yaml ./
 COPY package.json ./
 
-RUN npm install -g tsx 2>/dev/null || true
+RUN mkdir -p /usr/local/bin && \
+    ln -sf /app/node_modules/.pnpm/tsx@4.21.0/node_modules/tsx/dist/cli.mjs /usr/local/bin/tsx
 
 USER appuser
 ENV NODE_ENV=production
+ENV NODE_PATH=/app/apps/orchestrator/node_modules
 CMD ["npx", "tsx", "apps/orchestrator/src/index.ts"]
