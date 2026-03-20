@@ -1,5 +1,4 @@
 build-tools/
-!apps/orchestrator/dist/
 .env
 .env.*
 *.env
