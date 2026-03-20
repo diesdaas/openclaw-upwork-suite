@@ -17,4 +17,4 @@ if [ "$(stat -c '%u' "$DATA_DIR")" != "1000" ]; then
   chown -R 1000:1000 "$DATA_DIR" 2>/dev/null || true
 fi
 
-exec su node -c "node --import=tsx apps/orchestrator/src/index.ts"
+exec su node -c "NODE_PATH=/app/apps/orchestrator/node_modules:/app/node_modules node --import=tsx apps/orchestrator/src/index.ts"
