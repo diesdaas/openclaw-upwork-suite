@@ -2,7 +2,14 @@ import Database from "better-sqlite3";
 import crypto from "node:crypto";
 import { schemaSql } from "./schema";
 import type { JobDetail } from "../types";
-import type { MatchResult, ProposalDraft, ApprovalDecision } from "@openclaw-upwork-suite/shared-types";
+import type {
+  MatchResult,
+  ProposalDraft,
+  ApprovalDecision,
+  ClientReplyDraft,
+  ThreadSummary,
+  Escalation,
+} from "@openclaw-upwork-suite/shared-types";
 
 export class Store {
   private db: Database.Database;
@@ -294,5 +301,53 @@ export class Store {
   listUnnotifiedDrafts() {
     return this.listDraftedNotSubmitted()
       .filter(row => !this.wasNotificationSent(row.upwork_job_id, "draft_ready"));
+  }
+
+  // --- client messaging (message_runner) ---
+
+  loadPendingThreads(limit = 10) {
+    const rows = this.db.prepare(`
+      SELECT t.thread_id, t.thread_json
+      FROM client_threads t
+      LEFT JOIN client_reply_drafts d ON d.thread_id = t.thread_id
+      WHERE d.thread_id IS NULL
+      ORDER BY t.updated_at DESC
+      LIMIT ?
+    `).all(limit) as Array<{ thread_id: string; thread_json: string }>;
+
+    return rows.map(r => {
+      const parsed = JSON.parse(r.thread_json);
+      return { ...parsed, threadId: parsed.threadId || r.thread_id };
+    });
+  }
+
+  saveReplyDraft(draft: ClientReplyDraft) {
+    this.db.prepare(`
+      INSERT INTO client_reply_drafts (thread_id, draft_json, updated_at)
+      VALUES (?, ?, ?)
+      ON CONFLICT(thread_id) DO UPDATE SET
+        draft_json = excluded.draft_json,
+        updated_at = excluded.updated_at
+    `).run(draft.threadId, JSON.stringify(draft), this.nowIso());
+  }
+
+  saveThreadSummary(threadId: string, summary: ThreadSummary) {
+    this.db.prepare(`
+      INSERT INTO client_thread_summaries (thread_id, summary_json, updated_at)
+      VALUES (?, ?, ?)
+      ON CONFLICT(thread_id) DO UPDATE SET
+        summary_json = excluded.summary_json,
+        updated_at = excluded.updated_at
+    `).run(threadId, JSON.stringify(summary), this.nowIso());
+  }
+
+  saveEscalation(threadId: string, escalation: Escalation) {
+    this.db.prepare(`
+      INSERT INTO client_escalations (thread_id, escalation_json, updated_at)
+      VALUES (?, ?, ?)
+      ON CONFLICT(thread_id) DO UPDATE SET
+        escalation_json = excluded.escalation_json,
+        updated_at = excluded.updated_at
+    `).run(threadId, JSON.stringify(escalation), this.nowIso());
   }
 }

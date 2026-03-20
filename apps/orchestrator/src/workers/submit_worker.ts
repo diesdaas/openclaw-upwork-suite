@@ -26,29 +26,37 @@ export async function runSubmitWorker(accessToken: string, tenantId: string) {
         throw new Error("Cover letter too short");
       }
 
+      // Pre-submission gate: create BEFORE calling submitProposal
+      let gateRequest = createSubmissionGateRequest(draft.draftId, draft.jobId);
+      store.setState(`gate:${gateRequest.id}`, gateRequest);
       store.markQueued(row.upwork_job_id);
 
-      const result = await submitProposal(draft, {
-        humanApproved: true,
-        accessToken,
-        tenantId
-      });
+      let result;
+      try {
+        result = await submitProposal(draft, { humanApproved: true, accessToken, tenantId });
+      } catch (err) {
+        gateRequest.approvalStatus = "rejected";
+        gateRequest.blockingReasons.push(err instanceof Error ? err.message : String(err));
+        store.setState(`gate:${gateRequest.id}`, gateRequest);
+        store.markSubmitFailed(row.upwork_job_id, err instanceof Error ? err.message : String(err));
+        continue;
+      }
 
       if (result?.queued) {
-        // Emit SubmissionGateRequest — orchestrator owns Upwork submission call
-        const gateRequest = createSubmissionGateRequest(draft.draftId, draft.jobId);
         gateRequest.approvalStatus = "approved";
         store.setState(`gate:${gateRequest.id}`, gateRequest);
         store.markSubmitted(row.upwork_job_id);
         store.updateFingerprintStatus(row.upwork_job_id, "submitted");
       } else {
-        store.markSubmitFailed(row.upwork_job_id, "Unknown submit response");
+        gateRequest.approvalStatus = "rejected";
+        const reason = (result as { queued: boolean; reason?: string })?.reason ?? "Unknown submit response";
+        gateRequest.blockingReasons.push(reason);
+        store.setState(`gate:${gateRequest.id}`, gateRequest);
+        store.markSubmitFailed(row.upwork_job_id, reason);
       }
     } catch (err) {
-      store.markSubmitFailed(
-        row.upwork_job_id,
-        err instanceof Error ? err.message : String(err)
-      );
+      // Catches safeCheck / enforceProposalMinLength errors
+      store.markSubmitFailed(row.upwork_job_id, err instanceof Error ? err.message : String(err));
     }
   }
 }

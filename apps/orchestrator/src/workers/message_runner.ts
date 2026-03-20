@@ -1,42 +1,9 @@
 // Canonical contracts: @openclaw-upwork-suite/shared-types
 // Policy: @openclaw-upwork-suite/policies
-import Database from "better-sqlite3";
+import { Store } from "../db/store.js";
 import type { ClientThread, ClientReplyDraft, ThreadSummary } from "@openclaw-upwork-suite/shared-types";
 import type { Escalation } from "@openclaw-upwork-suite/shared-types";
 import { sanitizeDisclosure as policySanitize } from "@openclaw-upwork-suite/policies";
-
-const DB_FILE = process.env.UPWORK_SCOUT_DB || "data/state.sqlite";
-
-function nowIso() {
-  return new Date().toISOString();
-}
-
-function db() {
-  const conn = new Database(DB_FILE);
-  conn.pragma("journal_mode = WAL");
-  return conn;
-}
-
-function loadPendingThreads(limit = 10): ClientThread[] {
-  const conn = db();
-  const rows = conn.prepare(`
-    SELECT t.thread_id, t.thread_json
-    FROM client_threads t
-    LEFT JOIN client_reply_drafts d ON d.thread_id = t.thread_id
-    WHERE d.thread_id IS NULL
-    ORDER BY t.updated_at DESC
-    LIMIT ?
-  `).all(limit) as Array<{ thread_id: string; thread_json: string }>;
-  conn.close();
-
-  return rows.map(r => {
-    const parsed = JSON.parse(r.thread_json);
-    return {
-      ...parsed,
-      threadId: parsed.threadId || r.thread_id
-    } as ClientThread;
-  });
-}
 
 function latestClientMessage(thread: ClientThread): string {
   return [...thread.messages].reverse().find(m => m.senderId === "client")?.text || "";
@@ -93,39 +60,20 @@ function buildReply(thread: ClientThread, summary: ThreadSummary, intent: string
   let replyText = "";
 
   if (intent === "pricing") {
-    replyText = [
-      "I can give a grounded estimate once the scope and access details are clear.",
-      conciseQuestion(summary)
-    ].join(" ");
+    replyText = ["I can give a grounded estimate once the scope and access details are clear.", conciseQuestion(summary)].join(" ");
   } else if (intent === "timeline") {
-    replyText = [
-      "Timeline depends on the current setup and the exact blocker.",
-      conciseQuestion(summary)
-    ].join(" ");
+    replyText = ["Timeline depends on the current setup and the exact blocker.", conciseQuestion(summary)].join(" ");
   } else if (intent === "method_probe") {
-    replyText = [
-      "I use a structured implementation approach, but the immediate next step is to confirm the setup and constraint.",
-      conciseQuestion(summary)
-    ].join(" ");
+    replyText = ["I use a structured implementation approach, but the immediate next step is to confirm the setup and constraint.", conciseQuestion(summary)].join(" ");
   } else if (intent === "access_request") {
-    replyText = [
-      "Yes, I can review that.",
-      conciseQuestion(summary)
-    ].join(" ");
+    replyText = ["Yes, I can review that.", conciseQuestion(summary)].join(" ");
   } else if (intent === "capability_check") {
-    replyText = [
-      "Yes, that looks broadly aligned.",
-      factLine,
-      conciseQuestion(summary)
-    ].join(" ");
+    replyText = ["Yes, that looks broadly aligned.", factLine, conciseQuestion(summary)].join(" ");
   } else {
-    replyText = [
-      "That sounds aligned with the kind of work I can help with.",
-      conciseQuestion(summary)
-    ].join(" ");
+    replyText = ["That sounds aligned with the kind of work I can help with.", conciseQuestion(summary)].join(" ");
   }
 
-  replyText = policySanitize(replyText);
+  replyText = sanitizeAndCheck(replyText, msg);
   const now = new Date();
 
   const escalationNeeded =
@@ -147,11 +95,9 @@ function buildReply(thread: ClientThread, summary: ThreadSummary, intent: string
   };
 }
 
-function sanitizeDisclosure(reply: string, clientMessage: string): string {
-  // Use canonical policy for term replacement
+function sanitizeAndCheck(reply: string, clientMessage: string): string {
   let out = policySanitize(reply);
 
-  // Special handling for client probing (message-runner specific)
   if (/how exactly|step by step|what is your process|how do you do it/i.test(clientMessage)) {
     out = "I use a structured approach, but the immediate next step is to confirm the setup and the main constraint. To move forward, please share the current setup and the main blocker.";
   }
@@ -169,52 +115,16 @@ function buildEscalation(thread: ClientThread, draft: ClientReplyDraft): Escalat
   if (msg.includes("guarantee")) reasons.push("Guarantee requested");
   if (msg.includes("fixed price")) reasons.push("Fixed-price commitment requested");
   if (msg.includes("security") || msg.includes("compliance")) reasons.push("Security/compliance commitment requested");
-  if (msg.includes("how exactly") || msg.includes("step by step") || msg.includes("process")) reasons.push("Detailed process disclosure request");
+  if (/how exactly|step by step|process/i.test(msg)) reasons.push("Detailed process disclosure request");
 
-  return {
-    escalate: reasons.length > 0,
-    reasons
-  };
-}
-
-function saveReplyDraft(draft: ClientReplyDraft) {
-  const conn = db();
-  conn.prepare(`
-    INSERT INTO client_reply_drafts (thread_id, draft_json, updated_at)
-    VALUES (?, ?, ?)
-    ON CONFLICT(thread_id) DO UPDATE SET
-      draft_json = excluded.draft_json,
-      updated_at = excluded.updated_at
-  `).run(draft.threadId, JSON.stringify(draft), nowIso());
-  conn.close();
-}
-
-function saveSummary(threadId: string, summary: ThreadSummary) {
-  const conn = db();
-  conn.prepare(`
-    INSERT INTO client_thread_summaries (thread_id, summary_json, updated_at)
-    VALUES (?, ?, ?)
-    ON CONFLICT(thread_id) DO UPDATE SET
-      summary_json = excluded.summary_json,
-      updated_at = excluded.updated_at
-  `).run(threadId, JSON.stringify(summary), nowIso());
-  conn.close();
-}
-
-function saveEscalation(threadId: string, escalation: Escalation) {
-  const conn = db();
-  conn.prepare(`
-    INSERT INTO client_escalations (thread_id, escalation_json, updated_at)
-    VALUES (?, ?, ?)
-    ON CONFLICT(thread_id) DO UPDATE SET
-      escalation_json = excluded.escalation_json,
-      updated_at = excluded.updated_at
-  `).run(threadId, JSON.stringify(escalation), nowIso());
-  conn.close();
+  return { escalate: reasons.length > 0, reasons };
 }
 
 export async function runMessageRunner(limit = 10) {
-  const threads = loadPendingThreads(limit);
+  const store = new Store("data/state.sqlite");
+  store.init();
+
+  const threads = store.loadPendingThreads(limit);
 
   for (const thread of threads) {
     const msg = latestClientMessage(thread);
@@ -225,9 +135,9 @@ export async function runMessageRunner(limit = 10) {
     const draft = buildReply(thread, summary, intent);
     const escalation = buildEscalation(thread, draft);
 
-    saveSummary(thread.threadId, summary);
-    saveReplyDraft(draft);
-    if (escalation.escalate) saveEscalation(thread.threadId, escalation);
+    store.saveThreadSummary(thread.threadId, summary);
+    store.saveReplyDraft(draft);
+    if (escalation.escalate) store.saveEscalation(thread.threadId, escalation);
   }
 
   return { processed: threads.length };

@@ -8,7 +8,11 @@ export async function submitProposal(
     throw new Error("Blocked: explicit human approval required.");
   }
 
-  // Replace with the real mutation exposed by your Upwork scopes.
+  // PLACEHOLDER: replace mutation + fetch with real Upwork GraphQL call
+  if (process.env.ENABLE_REAL_SUBMISSION !== "true") {
+    return { queued: false, reason: "real submission disabled — set ENABLE_REAL_SUBMISSION=true" };
+  }
+
   const mutation = `
   mutation SubmitProposal($input: SubmitProposalInput!) {
     submitProposal(input: $input) {
