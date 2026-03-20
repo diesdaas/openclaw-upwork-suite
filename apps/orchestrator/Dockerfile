@@ -8,10 +8,9 @@ COPY apps/orchestrator/package*.json ./apps/orchestrator/
 COPY apps/orchestrator/tsconfig.json ./apps/orchestrator/
 COPY apps/orchestrator/src ./apps/orchestrator/src
 COPY apps/orchestrator/data ./apps/orchestrator/data
+COPY node_modules ./node_modules
 
-RUN npm install -g pnpm@9 && \
-    pnpm install --frozen-lockfile --ignore-scripts && \
-    pnpm turbo build \
+RUN pnpm turbo build \
         --filter=@openclaw-upwork-suite/shared-types \
         --filter=@openclaw-upwork-suite/policies \
         --filter=@openclaw-upwork-suite/upwork-api \
