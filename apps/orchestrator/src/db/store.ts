@@ -1,7 +1,8 @@
 import Database from "better-sqlite3";
 import crypto from "node:crypto";
 import { schemaSql } from "./schema";
-import type { JobDetail, MatchResult, ProposalDraft, ApprovalDecision } from "../types";
+import type { JobDetail } from "../types";
+import type { MatchResult, ProposalDraft, ApprovalDecision } from "@openclaw-upwork-suite/shared-types";
 
 export class Store {
   private db: Database.Database;

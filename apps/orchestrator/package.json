@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "check": "tsc --noEmit",
     "dev": "tsx src/index.ts",
     "poll": "tsx src/index.ts",
     "review": "tsx src/review/cli.ts",

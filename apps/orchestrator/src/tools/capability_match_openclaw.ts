@@ -1,4 +1,5 @@
-import type { Capability, JobDetail, MatchResult } from "../types";
+import type { Capability, MatchResult } from "@openclaw-upwork-suite/shared-types";
+import type { JobDetail } from "../types";
 import { config } from "../config";
 
 function includesAny(text: string, words: string[]) {

@@ -1,53 +1,9 @@
-// Canonical contract: @openclaw-upwork-suite/shared-types
-// TODO: Replace with direct imports once monorepo pnpm workspace is configured
-// import { sanitizeDisclosure } from "@openclaw-upwork-suite/policies/minimalDisclosure.js";
-
+// Canonical contracts: @openclaw-upwork-suite/shared-types
+// Policy: @openclaw-upwork-suite/policies
 import Database from "better-sqlite3";
-
-type ClientMessage = {
-  messageId: string;
-  senderId: string;
-  text: string;
-  timestamp: Date;
-};
-
-type ClientThread = {
-  threadId: string;
-  relatedEntityId: string;
-  relatedEntityType: "job" | "proposal" | "project";
-  clientIdentityMetadata: Record<string, unknown>;
-  messages: ClientMessage[];
-  approvedFacts: string[];
-  projectStatus: "active" | "archived" | "pending";
-  disclosurePolicyLevel: "low" | "medium" | "high" | "strict";
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type ClientReplyDraft = {
-  threadId: string;
-  replyText: string;
-  intent: string;
-  unansweredQuestions: string[];
-  escalationNeeded: boolean;
-  confidentialityFlags: string[];
-  createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type ThreadSummary = {
-  confirmedRequirements: string[];
-  missingInformation: string[];
-  blockers: string[];
-  assumptions: string[];
-  nextSteps: string[];
-};
-
-type Escalation = {
-  escalate: boolean;
-  reasons: string[];
-};
+import type { ClientThread, ClientReplyDraft, ThreadSummary } from "@openclaw-upwork-suite/shared-types";
+import type { Escalation } from "@openclaw-upwork-suite/shared-types";
+import { sanitizeDisclosure as policySanitize } from "@openclaw-upwork-suite/policies";
 
 const DB_FILE = process.env.UPWORK_SCOUT_DB || "data/state.sqlite";
 
@@ -169,7 +125,7 @@ function buildReply(thread: ClientThread, summary: ThreadSummary, intent: string
     ].join(" ");
   }
 
-  replyText = sanitizeDisclosure(replyText, msg);
+  replyText = policySanitize(replyText);
   const now = new Date();
 
   const escalationNeeded =
@@ -192,24 +148,10 @@ function buildReply(thread: ClientThread, summary: ThreadSummary, intent: string
 }
 
 function sanitizeDisclosure(reply: string, clientMessage: string): string {
-  let out = reply;
+  // Use canonical policy for term replacement
+  let out = policySanitize(reply);
 
-  const bannedTerms = [
-    /openclaw/gi,
-    /sub-?agents?/gi,
-    /runner/gi,
-    /prompt(s)?/gi,
-    /workflow(s)?/gi,
-    /toolchain/gi,
-    /automation layers?/gi,
-    /internal process/gi,
-    /orchestration/gi
-  ];
-
-  for (const pattern of bannedTerms) {
-    out = out.replace(pattern, "approach");
-  }
-
+  // Special handling for client probing (message-runner specific)
   if (/how exactly|step by step|what is your process|how do you do it/i.test(clientMessage)) {
     out = "I use a structured approach, but the immediate next step is to confirm the setup and the main constraint. To move forward, please share the current setup and the main blocker.";
   }

@@ -6,7 +6,8 @@ import { upworkGraphQL } from "../upwork/graphql";
 import { MARKETPLACE_JOB_SEARCH_QUERY } from "../upwork/queries";
 import { matchJobToCapabilities } from "../tools/capability_match_openclaw";
 import { buildApprovalPrompt } from "../tools/approval_prompt";
-import type { Capability, JobDetail } from "../types";
+import type { Capability } from "@openclaw-upwork-suite/shared-types";
+import type { JobDetail } from "../types";
 
 type MarketplaceJobEdge = {
   node: {

@@ -1,4 +1,5 @@
-import type { JobDetail, MatchResult } from "../types";
+import type { MatchResult } from "@openclaw-upwork-suite/shared-types";
+import type { JobDetail } from "../types";
 
 export function buildApprovalPrompt(job: JobDetail, match: MatchResult) {
   return {

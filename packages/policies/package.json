@@ -4,7 +4,16 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./minimalDisclosure": "./src/minimalDisclosure.ts",
+    "./antiOverclaiming": "./src/antiOverclaiming.ts"
+  },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "typescript": "^5.0.0"
   }
 }

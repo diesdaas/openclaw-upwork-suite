@@ -1,4 +1,4 @@
-import type { ProposalDraft } from "../types";
+import type { ProposalDraft } from "@openclaw-upwork-suite/shared-types";
 
 export async function submitProposal(
   draft: ProposalDraft,

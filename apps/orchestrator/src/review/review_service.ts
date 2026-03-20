@@ -1,5 +1,5 @@
 import { Store } from "../db/store";
-import type { ApprovalDecision } from "../types";
+import type { ApprovalDecision } from "@openclaw-upwork-suite/shared-types";
 
 export class ReviewService {
   private store: Store;

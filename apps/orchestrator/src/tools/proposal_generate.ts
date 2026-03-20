@@ -1,10 +1,12 @@
-import type { Capability, JobDetail, MatchResult, ProposalDraft } from "../types";
+import type { Capability, MatchResult } from "@openclaw-upwork-suite/shared-types";
+import type { JobDetail } from "../types";
+import { newProposalDraft } from "@openclaw-upwork-suite/shared-types";
 
 export function generateProposalDraft(
   job: JobDetail,
   match: MatchResult,
   capabilities: Capability[]
-): ProposalDraft {
+) {
   const evidence = capabilities
     .filter(c => match.matchedCapabilities.includes(c.name))
     .flatMap(c => c.evidence)
@@ -24,14 +26,14 @@ export function generateProposalDraft(
     `Best,`
   ].filter(Boolean).join("\n");
 
-  return {
+  return newProposalDraft({
     jobId: job.id,
-    subject: job.title,
     coverLetter,
     firstMilestone: "Audit workflow, reproduce issue, stabilize baseline, propose next implementation steps.",
     assumptions: [
       "Client can share workflow details or repo access.",
       "Required integrations are available during delivery."
-    ]
-  };
+    ],
+    createdBy: "orchestrator"
+  });
 }

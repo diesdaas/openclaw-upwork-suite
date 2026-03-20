@@ -1,44 +1,9 @@
-// Canonical contract: @openclaw-upwork-suite/shared-types SubmissionGateRequest
-// TODO: Replace with direct import once monorepo pnpm workspace is configured
-// import type { SubmissionGateRequest } from "@openclaw-upwork-suite/shared-types/contracts/submissionGate.js";
-
-type SubmissionGateRequest = {
-  id: string;
-  draftId: string;
-  jobId: string;
-  approvalStatus: "pending" | "approved" | "rejected";
-  blockingReasons: string[];
-  requestedAt: Date;
-};
-
-function createSubmissionGateRequest(draftId: string, jobId: string): SubmissionGateRequest {
-  return {
-    id: crypto.randomUUID(),
-    draftId,
-    jobId,
-    approvalStatus: "pending",
-    blockingReasons: [],
-    requestedAt: new Date(),
-  };
-}
-
+// Canonical: @openclaw-upwork-suite/shared-types SubmissionGateRequest
 import { Store } from "../db/store.js";
 import { submitProposal } from "../tools/proposal_submit.js";
-import type { ProposalDraft } from "../types.js";
-
-function safeCheck(draft: ProposalDraft) {
-  const text = `${draft.coverLetter}\n${draft.firstMilestone}`.toLowerCase();
-  const blockedPhrases = [
-    "guarantee",
-    "guaranteed results",
-    "top 1%",
-    "24/7 available",
-    "we built the exact same thing"
-  ];
-  const hit = blockedPhrases.find(p => text.includes(p));
-  if (hit) throw new Error(`Safe-check blocked phrase: ${hit}`);
-  if (!draft.coverLetter || draft.coverLetter.length < 80) throw new Error("Cover letter too short");
-}
+import type { ProposalDraft } from "@openclaw-upwork-suite/shared-types";
+import { safeCheckProposal, enforceProposalMinLength } from "@openclaw-upwork-suite/policies";
+import { createSubmissionGateRequest } from "@openclaw-upwork-suite/shared-types";
 
 export async function runSubmitWorker(accessToken: string, tenantId: string) {
   const store = new Store("data/state.sqlite");
@@ -49,7 +14,18 @@ export async function runSubmitWorker(accessToken: string, tenantId: string) {
   for (const row of jobs) {
     try {
       const draft = JSON.parse(row.draft_json) as ProposalDraft;
-      safeCheck(draft);
+
+      // safe-check via canonical policy — includes "we built the exact same thing"
+      const text = `${draft.coverLetter}\n${draft.firstMilestone ?? ""}`;
+      const check = safeCheckProposal(text);
+      if (!check.allowed) {
+        const phrase = check.blockedPhrases[0];
+        throw new Error(`Safe-check blocked phrase: ${phrase}`);
+      }
+      if (!enforceProposalMinLength(draft.coverLetter)) {
+        throw new Error("Cover letter too short");
+      }
+
       store.markQueued(row.upwork_job_id);
 
       const result = await submitProposal(draft, {
@@ -59,9 +35,9 @@ export async function runSubmitWorker(accessToken: string, tenantId: string) {
       });
 
       if (result?.queued) {
-        const gateRequest = createSubmissionGateRequest(row.upwork_job_id, row.upwork_job_id);
+        // Emit SubmissionGateRequest — orchestrator owns Upwork submission call
+        const gateRequest = createSubmissionGateRequest(draft.draftId, draft.jobId);
         gateRequest.approvalStatus = "approved";
-        gateRequest.blockingReasons = [];
         store.setState(`gate:${gateRequest.id}`, gateRequest);
         store.markSubmitted(row.upwork_job_id);
         store.updateFingerprintStatus(row.upwork_job_id, "submitted");

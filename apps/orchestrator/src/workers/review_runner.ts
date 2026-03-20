@@ -1,35 +1,12 @@
-// Canonical contract: @openclaw-upwork-suite/shared-types
-// TODO: Replace with direct imports once monorepo pnpm workspace is configured
-
+// Canonical contract: @openclaw-upwork-suite/shared-types ReviewQueueItem, ReviewDecision
 import Database from "better-sqlite3";
-
-type ReviewItemType = "proposal" | "client_reply" | "profile_update";
-type ReviewStatus = "pending" | "in_progress" | "completed" | "blocked";
-type ReviewDecisionValue = "pass" | "revise" | "escalate" | "block";
-
-type ReviewQueueItem = {
-  itemId: string;
-  itemType: ReviewItemType;
-  sourceModule: string;
-  sourceId: string;
-  payloadReference?: string;
-  embeddedPayload?: Record<string, unknown>;
-  priority: "low" | "medium" | "high" | "critical";
-  reviewStatus: ReviewStatus;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type ReviewDecision = {
-  itemId: string;
-  decision: ReviewDecisionValue;
-  issues: string[];
-  rationale: string;
-  allowedNextStep: string;
-  reviewer: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+import type {
+  ReviewQueueItem,
+  ReviewDecision,
+  ReviewItemType,
+  ReviewStatus,
+  ReviewDecisionValue,
+} from "@openclaw-upwork-suite/shared-types";
 
 const DB_FILE = process.env.UPWORK_SCOUT_DB || "data/state.sqlite";
 

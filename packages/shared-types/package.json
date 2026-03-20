@@ -4,10 +4,20 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./contracts/proposalDraft": "./src/contracts/proposalDraft.ts",
+    "./contracts/submissionGate": "./src/contracts/submissionGate.ts",
+    "./contracts/clientThread": "./src/contracts/clientThread.ts",
+    "./contracts/reviewQueue": "./src/contracts/reviewQueue.ts",
+    "./contracts/scoutToWriter": "./src/contracts/scoutToWriter.ts",
+    "./contracts/common": "./src/contracts/common.ts"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "typescript": "^5.0.0"
   }
 }

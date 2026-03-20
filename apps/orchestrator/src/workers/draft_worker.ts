@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import { Store } from "../db/store";
 import { generateProposalDraft } from "../tools/proposal_generate";
-import type { Capability, JobDetail, MatchResult } from "../types";
+import type { Capability, MatchResult } from "@openclaw-upwork-suite/shared-types";
+import type { JobDetail } from "../types";
 
 async function loadCapabilities(): Promise<Capability[]> {
   return JSON.parse(await fs.readFile("data/capabilities.json", "utf8"));
