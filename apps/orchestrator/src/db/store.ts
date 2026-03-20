@@ -11,11 +11,23 @@ import type {
   Escalation,
 } from "@openclaw-upwork-suite/shared-types";
 
+let _storeInstance: Store | undefined;
+let _storePath: string | undefined;
+
 export class Store {
   private db: Database.Database;
 
-  constructor(filename = "data/state.sqlite") {
-    this.db = new Database(filename);
+  constructor(filename?: string) {
+    if (filename) {
+      this.db = new Database(filename);
+    } else {
+      const dbPath = process.env.DATABASE_PATH;
+      if (dbPath) {
+        this.db = new Database(dbPath);
+      } else {
+        this.db = new Database(`${process.env.DATA_DIR ?? "data"}/state.sqlite`);
+      }
+    }
     this.db.pragma("journal_mode = WAL");
   }
 

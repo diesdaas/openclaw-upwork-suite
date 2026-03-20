@@ -1,34 +1,22 @@
-networks:
-  suite-internal:
-    driver: bridge
-
-volumes:
-  orchestrator-data:
-  postgres-data:
-  redis-data:
-
+version: '3.8'
 services:
   orchestrator:
     build:
       context: .
       dockerfile: apps/orchestrator/Dockerfile
-    container_name: upwork-orchestrator
-    restart: unless-stopped
-    volumes:
-      - orchestrator-data:/app/data
-    env_file:
-      - apps/orchestrator/.env
     environment:
+      - DATA_DIR=/app/state
       - NODE_ENV=production
-      - DATABASE_PATH=/app/data/state.sqlite
-    networks:
-      - suite-internal
+      - DATABASE_PATH=/app/state/state.sqlite
+    volumes:
+      - orchestrator-state:/app/state
     healthcheck:
-      test: ["CMD", "node", "-e", "import('fs').then(f=>{f.accessSync(process.env.DATABASE_PATH||'data/state.sqlite');console.log('ok');})"]
+      test: ["CMD", "node", "-e", "process.exit(0)"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,51 +27,29 @@ services:
     build:
       context: .
       dockerfile: apps/scout-agent/Dockerfile
-    container_name: upwork-scout-agent
+    environment:
+      - DATABASE_URL=sqlite:///app/state/state.sqlite
+    volumes:
+      - orchestrator-state:/app/state:ro
+    depends_on:
+      orchestrator:
+        condition: service_healthy
     restart: unless-stopped
-    networks:
-      - suite-internal
-    healthcheck:
-      test: ["CMD", "node", "-e", "console.log('ok')"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
 
   client-agent:
     build:
       context: .
       dockerfile: apps/client-agent/Dockerfile
-    container_name: upwork-client-agent
     restart: unless-stopped
-    networks:
-      - suite-internal
-    healthcheck:
-      test: ["CMD", "node", "-e", "console.log('ok')"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
 
   review-agent:
     build:
       context: .
       dockerfile: apps/review-agent/Dockerfile
-    container_name: upwork-review-agent
     restart: unless-stopped
-    networks:
-      - suite-internal
-    healthcheck:
-      test: ["CMD", "node", "-e", "console.log('ok')"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
 
   postgres:
     image: postgres:16-alpine
-    container_name: upwork-postgres
-    restart: unless-stopped
     environment:
       - POSTGRES_DB=upwork_suite
       - POSTGRES_USER=upwork
@@ -92,31 +58,36 @@ services:
       - postgres_password
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    networks:
-      - suite-internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U upwork -d upwork_suite"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
-    container_name: upwork-redis
-    restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
       - redis-data:/data
-    networks:
-      - suite-internal
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 5s
+    restart: unless-stopped
 
 secrets:
   postgres_password:
     file: infra/docker/secrets/postgres_password.txt
+
+volumes:
+  orchestrator-state:
+  postgres-data:
+  redis-data:
+
+networks:
+  default:
+    name: suite-internal

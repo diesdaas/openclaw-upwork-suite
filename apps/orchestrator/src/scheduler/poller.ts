@@ -45,7 +45,7 @@ function toJob(node: MarketplaceJobEdge["node"]): JobDetail {
 }
 
 export async function runPollingCycle(accessToken: string, tenantId: string) {
-  const store = new Store("data/state.sqlite");
+  const store = new Store();
   store.init();
 
   const runId = store.beginRun();

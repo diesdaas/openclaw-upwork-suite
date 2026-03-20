@@ -4,7 +4,7 @@ import { notifyNewPendingJobs } from "./review/notifier";
 import { runDraftWorker } from "./workers/draft_worker";
 
 async function cycle() {
-  const store = new Store("data/state.sqlite");
+  const store = new Store();
   store.init();
 
   const tokenState = store.getState<{ accessToken: string }>("upwork_tokens");
@@ -21,7 +21,7 @@ async function cycle() {
 async function main() {
   await cycle();
 
-  const store = new Store("data/state.sqlite");
+  const store = new Store();
   const tokenState = store.getState<{ accessToken: string }>("upwork_tokens");
   const tenantState = store.getState<{ tenantId: string }>("upwork_tenant");
 

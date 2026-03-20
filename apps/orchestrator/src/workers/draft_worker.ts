@@ -14,7 +14,7 @@ function parseJson<T>(value: string | null): T | null {
 }
 
 export async function runDraftWorker() {
-  const store = new Store("data/state.sqlite");
+  const store = new Store();
   store.init();
 
   const capabilities = await loadCapabilities();

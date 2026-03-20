@@ -5,7 +5,7 @@ const token = process.env.TELEGRAM_BOT_TOKEN!;
 const chatId = process.env.TELEGRAM_CHAT_ID!;
 
 export async function notifyNewPendingJobs() {
-  const store = new Store("data/state.sqlite");
+  const store = new Store();
   store.init();
 
   const bot = new TelegramBot(token);

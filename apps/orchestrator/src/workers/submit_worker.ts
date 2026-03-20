@@ -6,7 +6,7 @@ import { safeCheckProposal, enforceProposalMinLength } from "@openclaw-upwork-su
 import { createSubmissionGateRequest } from "@openclaw-upwork-suite/shared-types";
 
 export async function runSubmitWorker(accessToken: string, tenantId: string) {
-  const store = new Store("data/state.sqlite");
+  const store = new Store();
   store.init();
 
   const jobs = store.getApprovedSubmitJobs();

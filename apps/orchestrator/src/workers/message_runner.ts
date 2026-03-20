@@ -121,7 +121,7 @@ function buildEscalation(thread: ClientThread, draft: ClientReplyDraft): Escalat
 }
 
 export async function runMessageRunner(limit = 10) {
-  const store = new Store("data/state.sqlite");
+  const store = new Store();
   store.init();
 
   const threads = store.loadPendingThreads(limit);
