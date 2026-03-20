@@ -1,0 +1,9 @@
+{
+  "name": "@openclaw-upwork-suite/scout-agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'scout-agent stub'"
+  }
+}
