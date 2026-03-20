@@ -15,6 +15,8 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  apps/client-agent: {}
+
   apps/orchestrator:
     dependencies:
       '@openclaw-upwork-suite/policies':
@@ -49,6 +51,10 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  apps/review-agent: {}
+
+  apps/scout-agent: {}
+
   packages/db:
     devDependencies:
       '@types/better-sqlite3':
@@ -63,18 +69,27 @@ importers:
 
   packages/policies:
     devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.15
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
 
   packages/shared-types:
     devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.15
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
 
   packages/upwork-api:
     devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.15
       typescript:
         specifier: ^5.0.0
         version: 5.9.3

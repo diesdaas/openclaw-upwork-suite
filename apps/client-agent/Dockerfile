@@ -1,10 +1,8 @@
-FROM node:20-slim
+FROM node:20-slim AS runner
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-COPY packages ./packages
-COPY apps/client-agent/package.json ./apps/client-agent/
-RUN npm install --legacy-peer-deps
+COPY node_modules ./node_modules
 COPY apps/client-agent ./apps/client-agent
+COPY apps/client-agent/package.json ./apps/client-agent/
 RUN groupadd --gid 1001 appuser && useradd --uid 1001 --gid appuser --shell /bin/bash --create-home appuser \
     && chown -R appuser:appuser /app
 USER appuser
