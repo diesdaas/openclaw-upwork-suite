@@ -1,0 +1,13 @@
+{
+  "name": "@openclaw-upwork-suite/shared-types",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
