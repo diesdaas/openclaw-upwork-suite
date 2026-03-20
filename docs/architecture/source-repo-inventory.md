@@ -160,7 +160,7 @@ skills/             # Skill definitions
 
 | File | Lines | Purpose | Key Exports / Types |
 |---|---|---|---|
-| `tools/review_queue.ts` | 245 | Review queue management tool | `ToolResult<T>`, `ReviewItem`, `loadReviewQueue()`, `saveReviewDecision()`, `markReviewReleased()`, `markReviewBlocked()`; defines inline DDL for `internal_review_queue` / `internal_review_decisions`; **BUG: queries `application_drafts` table which does not exist** (line 63, see RISK-007) |
+| `tools/review_queue.ts` | 245 | Review queue management tool | `ToolResult<T>`, `ReviewItem`, `loadReviewQueue()`, `saveReviewDecision()`, `markReviewReleased()`, `markReviewBlocked()`; defines inline DDL for `internal_review_queue` / `internal_review_decisions`; ✅ **RISK-007 FIXED** (commit `5392078`): line 63 now queries `proposals` (was `application_drafts`) |
 
 **`profiles/` directory:**
 | File | Purpose |
@@ -183,7 +183,7 @@ skills/             # Skill definitions
 | jobs/assessments/drafts schema | `src/db/store.ts` vs `tools/upwork_store.ts` | RISK-004 |
 | Client-thread tables DDL | `message_runner.ts` vs `client_messages.ts` | RISK-005 |
 | Internal review queue DDL | `review_runner.ts` vs `review_queue.ts` | RISK-006 |
-| `application_drafts` vs `proposals` | `review_queue.ts:63` | RISK-007 |
+| `application_drafts` vs `proposals` | `review_queue.ts:63` | ✅ RISK-007 FIXED |
 | GraphQL query file | Both repos have identical `graphql/search_jobs.graphql` | RISK-008 |
 | `job_status` vs `job_fingerprints` | `tools/upwork_store.ts` defines `job_status` absent from orchestrator | RISK-009 |
 | Raw DB access in agent | `client_messages.ts` instantiates `better-sqlite3` directly | RISK-010 |

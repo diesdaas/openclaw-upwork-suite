@@ -129,7 +129,7 @@ Documented risks identified during Phase 1 source inspection of `upwork-job-scou
 
 **Mitigation:** Change line 63 of `review_queue.ts` from `FROM application_drafts` to `FROM proposals`. Also adjust column names: `draft_json` exists in `proposals`, but `updated_at` should reference `updated_at` column (which exists in `proposals`). Verify column names match the orchestrator's `proposals` schema (`upwork_job_id`, `draft_json`, `submit_status`, `submitted_at`, `updated_at`). **Fix before migration.**
 
-**Status:** Open.
+**Status:** ✅ **MITIGATED** — Fixed in `openclaw-review-manager` at commit `5392078`. Line 63 changed from `FROM application_drafts` to `FROM proposals`. Column names (`upwork_job_id`, `draft_json`, `updated_at`) verified to match orchestrator's `proposals` schema.
 
 ---
 
@@ -227,7 +227,7 @@ This is a principle violation: an agent with direct DB access can read any table
 | RISK-004 | Duplicate DB schema: jobs/drafts/assessments | High | Open |
 | RISK-005 | Duplicate client-thread schema in message_runner and client_messages | Medium | Open |
 | RISK-006 | Duplicate internal_review_queue schema in review_runner and review_queue | Low | Open |
-| RISK-007 | `review_queue.ts` queries non-existent `application_drafts` table | **Critical** | Open |
+| RISK-007 | `review_queue.ts` queries non-existent `application_drafts` table | **Critical** | ✅ Mitigated |
 | RISK-008 | Duplicate GraphQL query files | Low | Open |
 | RISK-009 | `upwork_store.ts` defines `job_status` table absent from orchestrator | Medium | Open |
 | RISK-010 | Client-agent has full direct DB access via `better-sqlite3` | High | Open |

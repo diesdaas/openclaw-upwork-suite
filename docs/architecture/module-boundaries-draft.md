@@ -150,7 +150,7 @@ tools/
 ```
 
 **`tools/review_queue.ts` refactoring required:**
-- **BUG FIX FIRST**: Change line 63 `FROM application_drafts` → `FROM proposals` (RISK-007)
+- ✅ **RISK-007 FIXED** (commit `5392078`): `FROM application_drafts` → `FROM proposals`
 - Current: raw `new Database(...)`
 - Target: imports `createReviewQueueStore()` from `packages/db`
 

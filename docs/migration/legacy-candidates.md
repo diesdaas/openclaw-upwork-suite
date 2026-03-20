@@ -187,11 +187,11 @@ These files and patterns have been identified as candidates for deprecation, con
 | Field | Value |
 |---|---|
 | **Candidate** | `openclaw-review-manager/tools/review_queue.ts` line 63 |
-| **Action** | FIX BUG |
-| **Current** | `SELECT upwork_job_id, draft_json, updated_at FROM application_drafts` |
-| **Expected** | `SELECT upwork_job_id, draft_json, updated_at FROM proposals` |
-| **Rationale** | `application_drafts` table does not exist. The orchestrator uses `proposals` table. This query will crash at runtime with `SQLITE_ERROR: no such table: application_drafts`. |
-| **Prerequisite** | None — fix in-place in the source repo before migration. |
+| **Action** | FIXED ✅ |
+| **Before** | `SELECT upwork_job_id, draft_json, updated_at FROM application_drafts` |
+| **After** | `SELECT upwork_job_id, draft_json, updated_at FROM proposals` (openclaw-review-manager commit `5392078`) |
+| **Rationale** | `application_drafts` table does not exist. The orchestrator uses `proposals` table. This query would crash at runtime with `SQLITE_ERROR: no such table: application_drafts`. |
+| **Prerequisite** | None — fixed in-place in source repo. |
 | **Notes** | Also verify `draft_json` column name: the orchestrator's `proposals` table (schema.ts line 55) has `draft_json TEXT`. Column name match confirmed. `updated_at` column also exists in `proposals`. The fix is a one-line change on line 63. |
 
 ### `upwork-job-scouter/src/workers/submit_worker.ts` — Incomplete safeCheck blocklist

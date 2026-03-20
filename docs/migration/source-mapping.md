@@ -64,7 +64,7 @@ This document maps every meaningful file from each legacy source repository into
 
 | Original Path | Destination | Action | Notes |
 |---|---|---|---|
-| tools/review_queue.ts | `packages/db/src/review-queue.ts` | MERGE | See RISK-006. DB schema (`internal_review_queue`, `internal_review_decisions`) is IDENTICAL to `review_runner.ts`. Consolidate schema into `packages/db`. **BUG (RISK-007)**: Line 63 queries `application_drafts` table which does not exist. Fix to query `proposals` table before migration. Tool wrappers (`loadReviewQueue`, `saveReviewDecision`, `markReviewReleased`, `markReviewBlocked`) become the canonical interface. |
+| tools/review_queue.ts | `packages/db/src/review-queue.ts` | MERGE | See RISK-006. DB schema (`internal_review_queue`, `internal_review_decisions`) is IDENTICAL to `review_runner.ts`. Consolidate schema into `packages/db`. ✅ **RISK-007 FIXED** (commit `5392078`): `application_drafts` → `proposals`. Tool wrappers (`loadReviewQueue`, `saveReviewDecision`, `markReviewReleased`, `markReviewBlocked`) become the canonical interface. |
 
 ---
 
