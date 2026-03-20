@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: apps/orchestrator/Dockerfile
+    env_file:
+      - apps/orchestrator/.env
     environment:
       - DATA_DIR=/app/state
       - NODE_ENV=production
