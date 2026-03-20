@@ -1,5 +1,4 @@
-# node_modules removed from ignore — needed for COPY node_modules in Dockerfiles
-# dist
+build-tools/
 dist
 .env
 .env.*

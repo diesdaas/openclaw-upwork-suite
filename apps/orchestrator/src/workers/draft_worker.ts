@@ -4,8 +4,12 @@ import { generateProposalDraft } from "../tools/proposal_generate";
 import type { Capability, MatchResult } from "@openclaw-upwork-suite/shared-types";
 import type { JobDetail } from "../types";
 
+function dataDir() {
+  return process.env.DATA_DIR ?? "data";
+}
+
 async function loadCapabilities(): Promise<Capability[]> {
-  return JSON.parse(await fs.readFile("data/capabilities.json", "utf8"));
+  return JSON.parse(await fs.readFile(`${dataDir()}/capabilities.json`, "utf8"));
 }
 
 function parseJson<T>(value: string | null): T | null {
