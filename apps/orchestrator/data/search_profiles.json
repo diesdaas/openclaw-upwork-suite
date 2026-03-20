@@ -1,0 +1,17 @@
+[
+  {
+    "id": "openclaw-core",
+    "name": "OpenClaw core",
+    "query": "OpenClaw automation OR OpenClaw agent OR OpenClaw integration"
+  },
+  {
+    "id": "ai-automation",
+    "name": "AI automation",
+    "query": "AI automation workflow agent integration API browser"
+  },
+  {
+    "id": "browser-api-ops",
+    "name": "Browser/API ops",
+    "query": "browser automation API integration workflow n8n MCP"
+  }
+]

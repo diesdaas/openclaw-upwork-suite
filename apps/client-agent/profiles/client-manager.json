@@ -1,0 +1,14 @@
+{
+  "name": "client-manager",
+  "description": "Handles client communication with minimal disclosure, clear requirement clarification, and escalation-safe reply drafting.",
+  "model": {
+    "temperature": 0.15,
+    "max_tokens": 140
+  },
+  "skills": [
+    "requirement_clarifier",
+    "client_reply_writer",
+    "escalation_gate"
+  ],
+  "toolRegistry": "./tool-registry.json"
+}

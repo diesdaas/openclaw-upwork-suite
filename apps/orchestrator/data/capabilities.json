@@ -1,0 +1,50 @@
+[
+  {
+    "id": "agent-supervisor",
+    "name": "OpenClaw Supervisor Agent",
+    "category": "agent",
+    "description": "Coordinates specialized agents and multi-step workflows.",
+    "inputs": ["task goal", "context", "constraints"],
+    "outputs": ["task plan", "delegated actions", "status"],
+    "keywords": ["openclaw", "agent orchestration", "multi-agent", "workflow"],
+    "evidence": ["OpenClaw deployment and orchestration experience"],
+    "confidence": 0.9,
+    "active": true
+  },
+  {
+    "id": "skill-browser-automation",
+    "name": "Browser Automation",
+    "category": "skill",
+    "description": "Automates browser-based workflows and uploads.",
+    "inputs": ["url", "task", "selectors"],
+    "outputs": ["result", "artifacts", "status"],
+    "keywords": ["browser automation", "browser-use", "agent-browser", "web automation"],
+    "evidence": ["Browser-based automation skill work"],
+    "confidence": 0.85,
+    "active": true
+  },
+  {
+    "id": "tool-api-integration",
+    "name": "API Integrations",
+    "category": "tool",
+    "description": "Connects workflows to external APIs and service backends.",
+    "inputs": ["endpoint", "auth", "payload"],
+    "outputs": ["response", "normalized data"],
+    "keywords": ["api integration", "rest", "graphql", "webhook", "automation"],
+    "evidence": ["Repeated work around integrations and automation flows"],
+    "confidence": 0.9,
+    "active": true
+  },
+  {
+    "id": "infra-openclaw-deploy",
+    "name": "OpenClaw Deployment",
+    "category": "infra",
+    "description": "Deploys and maintains OpenClaw on server environments.",
+    "inputs": ["server", "env", "secrets"],
+    "outputs": ["running deployment", "updated config"],
+    "keywords": ["deployment", "docker", "ansible", "server", "openclaw setup"],
+    "evidence": ["Installed OpenClaw using ansible/QMD workflow"],
+    "confidence": 0.9,
+    "active": true
+  }
+]

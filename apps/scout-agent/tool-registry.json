@@ -1,0 +1,94 @@
+{
+  "agent": "upwork-scout",
+  "version": "0.2.0",
+  "tools": [
+    {
+      "name": "upwork_search_jobs",
+      "module": "./tools/upwork_graphql.ts",
+      "function": "upworkSearchJobs",
+      "description": "Find new or changed Upwork jobs using approved search profiles.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["query", "accessToken", "tenantId"],
+        "properties": {
+          "query": { "type": "string" },
+          "first": { "type": "number" },
+          "accessToken": { "type": "string" },
+          "tenantId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "upwork_get_job_state",
+      "module": "./tools/upwork_store.ts",
+      "function": "upworkGetJobState",
+      "description": "Read local state for one job.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["jobId"],
+        "properties": {
+          "jobId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "upwork_save_assessment",
+      "module": "./tools/upwork_store.ts",
+      "function": "upworkSaveAssessment",
+      "description": "Persist capability match results.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["jobId", "assessment"],
+        "properties": {
+          "jobId": { "type": "string" },
+          "assessment": {}
+        }
+      }
+    },
+    {
+      "name": "upwork_save_draft",
+      "module": "./tools/upwork_store.ts",
+      "function": "upworkSaveDraft",
+      "description": "Persist a generated proposal draft.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["jobId", "draft"],
+        "properties": {
+          "jobId": { "type": "string" },
+          "draft": {}
+        }
+      }
+    },
+    {
+      "name": "telegram_send_review",
+      "module": "./tools/telegram_review.ts",
+      "function": "telegramSendReview",
+      "description": "Send a review card to the human.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["jobId", "title", "text"],
+        "properties": {
+          "jobId": { "type": "string" },
+          "title": { "type": "string" },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "upwork_submit_proposal",
+      "module": "./tools/proposal_submit.ts",
+      "function": "upworkSubmitProposal",
+      "description": "Queue or submit a proposal after explicit human approval.",
+      "requiresApproval": true,
+      "inputSchema": {
+        "type": "object",
+        "required": ["jobId", "coverLetter", "approved"],
+        "properties": {
+          "jobId": { "type": "string" },
+          "coverLetter": { "type": "string" },
+          "approved": { "type": "boolean" }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "agent": "review-manager",
+  "version": "0.1.0",
+  "tools": [
+    {
+      "name": "load_review_queue",
+      "module": "./tools/review_queue.ts",
+      "function": "loadReviewQueue",
+      "description": "Load pending internal review items.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "number" }
+        }
+      }
+    },
+    {
+      "name": "save_review_decision",
+      "module": "./tools/review_queue.ts",
+      "function": "saveReviewDecision",
+      "description": "Persist a review decision.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["itemId", "decision"],
+        "properties": {
+          "itemId": { "type": "string" },
+          "decision": {}
+        }
+      }
+    },
+    {
+      "name": "mark_review_released",
+      "module": "./tools/review_queue.ts",
+      "function": "markReviewReleased",
+      "description": "Mark an item as approved for the next step.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["itemId"],
+        "properties": {
+          "itemId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "mark_review_blocked",
+      "module": "./tools/review_queue.ts",
+      "function": "markReviewBlocked",
+      "description": "Mark an item as blocked or escalated.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["itemId", "reason"],
+        "properties": {
+          "itemId": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

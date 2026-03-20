@@ -1,0 +1,61 @@
+{
+  "agent": "client-manager",
+  "version": "0.2.0",
+  "tools": [
+    {
+      "name": "load_client_thread",
+      "module": "./tools/client_messages.ts",
+      "function": "loadClientThread",
+      "description": "Load one client thread and related state.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["threadId"],
+        "properties": {
+          "threadId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "save_client_reply_draft",
+      "module": "./tools/client_messages.ts",
+      "function": "saveClientReplyDraft",
+      "description": "Save one drafted client reply.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["threadId", "draft"],
+        "properties": {
+          "threadId": { "type": "string" },
+          "draft": {}
+        }
+      }
+    },
+    {
+      "name": "save_client_thread_summary",
+      "module": "./tools/client_messages.ts",
+      "function": "saveClientThreadSummary",
+      "description": "Save updated summary, requirements, blockers, and next steps.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["threadId", "summary"],
+        "properties": {
+          "threadId": { "type": "string" },
+          "summary": {}
+        }
+      }
+    },
+    {
+      "name": "save_client_escalation",
+      "module": "./tools/client_messages.ts",
+      "function": "saveClientEscalation",
+      "description": "Save escalation reasons for human review.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["threadId", "escalation"],
+        "properties": {
+          "threadId": { "type": "string" },
+          "escalation": {}
+        }
+      }
+    }
+  ]
+}

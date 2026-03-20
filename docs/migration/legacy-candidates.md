@@ -237,3 +237,44 @@ Scout-agent's `job_status` table in `upwork_store.ts` is deprecated — deleted 
 **Locked:** `apps/orchestrator` owns ingestion, thread handling, release/send decisions, and transport. `client-manager` only drafts replies and extracts structure. `review-manager` gates replies before release.
 
 Functions `buildReply`, `classifyIntent`, `buildSummary`, `sanitizeDisclosure`, `buildEscalation` remain in `apps/orchestrator/src/workers/message-runner.ts`. Client-manager uses them via contract calls — they are not moved to the agent workspace.
+
+---
+
+## Phase 3 Migration Status (2026-03-20)
+
+**Migrated Files (Phase 3):**
+
+| Source File | Target Location | Status |
+|---|---|---|
+| `src/scheduler/poller.ts` | `apps/orchestrator/src/scheduler/poller.ts` | ✅ Migrated + type fixes |
+| `src/workers/draft_worker.ts` | `apps/orchestrator/src/workers/draft_worker.ts` | ✅ Migrated |
+| `src/tools/proposal_generate.ts` | `apps/orchestrator/src/tools/proposal_generate.ts` | ✅ Migrated |
+| `src/tools/capability_match_openclaw.ts` | `apps/orchestrator/src/tools/capability_match_openclaw.ts` | ✅ Migrated |
+| `src/tools/approval_prompt.ts` | `apps/orchestrator/src/tools/approval_prompt.ts` | ✅ Migrated |
+| `src/tools/proposal_submit.ts` | `apps/orchestrator/src/tools/proposal-submit.ts` | ✅ Migrated (renamed) |
+| `src/workers/submit_worker.ts` | `apps/orchestrator/src/workers/submit-worker.ts` | ✅ Migrated (renamed, SubmissionGateRequest) |
+| `src/workers/message_runner.ts` | `apps/orchestrator/src/workers/message-runner.ts` | ✅ Migrated (locked naming) |
+| `src/workers/review_runner.ts` | `apps/orchestrator/src/workers/review-runner.ts` | ✅ Migrated (locked naming + optional chaining) |
+| `src/review/telegram.ts` | `apps/orchestrator/src/review/telegram.ts` | ✅ Migrated + type declaration added |
+| `src/review/review_service.ts` | `apps/orchestrator/src/review/review_service.ts` | ✅ Migrated |
+| `src/review/notifier.ts` | `apps/orchestrator/src/review/notifier.ts` | ✅ Migrated + type declaration added |
+| `src/review/cli.ts` | `apps/orchestrator/src/review/cli.ts` | ✅ Migrated |
+| `src/upwork/graphql.ts` | `packages/upwork-api/src/graphql.ts` | ✅ Migrated |
+| `src/upwork/queries.ts` | `packages/upwork-api/src/queries.ts` | ✅ Migrated |
+| `graphql/search_jobs.graphql` | `packages/upwork-api/graphql/search-jobs.graphql` | ✅ Migrated |
+| `src/db/schema.ts` | `packages/db/src/schema.sql` | ✅ Migrated (consolidated) |
+| Agent identity files | `apps/*/SOUL.md`, `AGENTS.md`, etc. | ✅ Migrated |
+
+**Deprecated Sources (NOT migrated to suite — remain in source repos):**
+- `openclaw-upwork-job-scouter/tools/upwork_graphql.ts` — superseded by `packages/upwork-api`
+- `openclaw-upwork-job-scouter/tools/proposal_submit.ts` — superseded by orchestrator `submit-worker`
+- `openclaw-upwork-job-scouter/tools/telegram_review.ts` — superseded by orchestrator `telegram.ts`
+- `openclaw-upwork-job-scouter/tools/upwork_store.ts` — superseded by orchestrator `store.ts`
+- `openclaw-client-manager/tools/client_messages.ts` — superseded by orchestrator `message-runner.ts`
+- `openclaw-review-manager/tools/review_queue.ts` — superseded by orchestrator `review-runner.ts`
+
+**Deferred to Phase 4:**
+- `.js` extension cleanup (source repos use `NodeNext` requiring explicit extensions; suite uses `bundler` resolution)
+- Cross-package workspace imports (`@openclaw-upwork-suite/*` from orchestrator app files)
+- Native module builds (`better-sqlite3`, `node-telegram-bot-api`)
+- Agent workspace tool implementations (not migrated per Phase 1 decisions)

@@ -1,0 +1,16 @@
+{
+  "name": "upwork-scout",
+  "description": "Finds relevant Upwork jobs for existing OpenClaw capabilities and prepares human-approved proposals.",
+  "model": {
+    "temperature": 0.2,
+    "max_tokens": 120
+  },
+  "skills": [
+    "upwork_search",
+    "capability_match",
+    "job_review",
+    "proposal_writer",
+    "proposal_submit_guard"
+  ],
+  "toolRegistry": "./tool-registry.json"
+}

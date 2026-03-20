@@ -1,0 +1,29 @@
+{
+  "name": "@openclaw-upwork-suite/orchestrator",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "poll": "tsx src/index.ts",
+    "review": "tsx src/review/cli.ts",
+    "drafts": "tsx src/workers/draft_worker.ts",
+    "submit": "tsx src/workers/submit_worker.ts",
+    "telegram": "tsx src/review/telegram.ts",
+    "review-manager": "tsx src/workers/review_runner.ts"
+  },
+  "dependencies": {
+    "@openclaw-upwork-suite/policies": "workspace:*",
+    "@openclaw-upwork-suite/shared-types": "workspace:*",
+    "@openclaw-upwork-suite/upwork-api": "workspace:*",
+    "better-sqlite3": "^11.7.0",
+    "node-cron": "^4.0.5",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.9.3"
+  }
+}

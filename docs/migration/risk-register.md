@@ -232,3 +232,30 @@ This is a principle violation: an agent with direct DB access can read any table
 | RISK-009 | `upwork_store.ts` defines `job_status` table absent from orchestrator | Medium | ✅ Resolved |
 | RISK-010 | Client-agent has full direct DB access via `better-sqlite3` | High | ✅ Resolved |
 | RISK-011 | Scout-agent has its own DB write tools | High | ✅ Resolved |
+
+---
+
+## Phase 3 Migration Status (2026-03-20)
+
+**Completed:**
+- Task 1: App scaffolding + orchestrator entry (`package.json`, `tsconfig.json`, identity files)
+- Task 2: `packages/db/src/schema.sql` with all 13 consolidated tables
+- Task 3: `packages/upwork-api/src/` — GraphQL client and queries migrated
+- Task 4: Orchestrator workers migrated (poller, draft_worker, proposal_generate, capability_match, approval_prompt)
+- Task 5: submit_worker migrated with `SubmissionGateRequest` emission
+- Task 6: Review system migrated (telegram, review_service, notifier, cli)
+- Task 7: message_runner + review_runner migrated with locked naming
+- Task 8: Agent workspaces scaffolded (identity files only; no deprecated tools migrated)
+- Task 9: All packages + orchestrator app pass `npx tsc --noEmit`
+
+**TypeScript Fixes Applied During Phase 3:**
+- `review_runner.ts`: Added `?.` optional chaining to `embeddedPayload` property accesses (lines 80-81, 122-123)
+- `poller.ts`: Fixed `SearchResponse` type to allow indexed access on optional chain
+- `store.ts`: Added explicit return types to `listPendingReviewDetailed()`, `listDraftedNotSubmitted()`, `listUnnotifiedPendingReview()`, `listUnnotifiedDrafts()`
+- `telegram.ts` + `notifier.ts`: Created `src/types/node-telegram-bot-api.d.ts` declaration file; added explicit types to callback parameters
+- `tsconfig.json`: Changed from `NodeNext` to `bundler` resolution (matches packages; resolves pre-existing `.js` extension requirement)
+- `package.json`: Added workspace dependencies on `@openclaw-upwork-suite/shared-types`, `@openclaw-upwork-suite/policies`, `@openclaw-upwork-suite/upwork-api`
+
+**Known Pre-Existing Issues (not introduced by Phase 3):**
+- `.js` extension requirement in source repos (`moduleResolution: NodeNext`) — mitigated in suite by using `moduleResolution: bundler`
+- `better-sqlite3` native module requires build approval (`pnpm approve-builds`) — not yet approved

@@ -1,0 +1,14 @@
+{
+  "name": "review-manager",
+  "description": "Central internal review gate for proposal drafts and client reply drafts.",
+  "model": {
+    "temperature": 0.1,
+    "max_tokens": 140
+  },
+  "skills": [
+    "review_queue_router",
+    "review_decider",
+    "safe_send_gate"
+  ],
+  "toolRegistry": "./tool-registry.json"
+}
