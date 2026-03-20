@@ -2,6 +2,7 @@
   "name": "openclaw-upwork-suite",
   "version": "0.0.0",
   "private": true,
+  "packageManager": "pnpm@10.30.0",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
