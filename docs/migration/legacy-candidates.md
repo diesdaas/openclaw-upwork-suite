@@ -198,62 +198,42 @@ These files and patterns have been identified as candidates for deprecation, con
 
 | Field | Value |
 |---|---|
-| **Candidate** | `upwork-job-scouter/src/workers/submit_worker.ts` lines 5-10 |
-| **Action** | FIX BUG (merge blocklist from scout-agent) |
-| **Current blocklist** | `["guarantee", "guaranteed results", "top 1%", "24/7 available"]` |
-| **Missing** | `"we built the exact same thing"` (present in scout-agent `safeCheck`) |
-| **Rationale** | The scout-agent's `safeCheck` blocks `"we built the exact same thing"` which the orchestrator's submit worker does not. Proposals containing this phrase would pass the orchestrator's check but be flagged by the scout-agent's check. Normalize on the more restrictive list. |
-| **Prerequisite** | RISK-002 resolution. |
-| **Notes** | The scout-agent's blocklist also differs in that it checks `coverLetter` only (not `firstMilestone`), while the orchestrator checks `${draft.coverLetter}\n${draft.firstMilestone}`. Align the scope too — check both cover letter and milestone text. |
+| **Candidate** | `upwork-job-scouter/src/workers/submit_worker.ts` line 7 |
+| **Action** | FIXED ✅ |
+| **Before** | `["guarantee", "guaranteed results", "top 1%", "24/7 available"]` |
+| **After** | `["guarantee", "guaranteed results", "top 1%", "24/7 available", "we built the exact same thing"]` (upwork-job-scouter commit `f239ad8`) |
+| **Rationale** | Harmonizes blocklist with scout-agent version. Both submit paths now block the same 5 phrases. |
+| **Prerequisite** | RISK-002 resolved. |
+| **Notes** | Scope unchanged: checks `${draft.coverLetter}\n${draft.firstMilestone}` (both fields). |
 
 ---
 
-## Open Questions (Flag for Human Decision)
+## Open Questions — Resolved ✅
 
-### [NEEDS_DECISION] Who owns the submit decision?
+All 5 open decisions are now locked. These are **not** blockers for Phase 2.
 
-The scout-agent version of `proposal_submit.ts` requires `approved: true` as input. The orchestrator's `submit_worker.ts` checks `humanApproved: true` in `submitProposal`'s options but then returns `{queued: true}` without actually calling the mutation — the mutation execution seems to be a TODO ("Replace with the real mutation exposed by your Upwork scopes").
+### Decision 1: Submit ownership ✅
 
-**Question:** Is `submitProposal` meant to be called by the worker (which it is) and the mutation returned as data, or should the worker call the Upwork API directly? Currently `submit_worker.ts` line 25-29 calls `submitProposal` but only reads `result.queued` — it never actually sends the GraphQL mutation.
+**Locked:** `apps/orchestrator` owns the real Upwork submission call. `submit_worker` only prepares, validates, and emits a `SubmissionGateRequest`. No worker submits directly. The `submitProposal` function returns mutation/variables; `submit_worker` calls it and the orchestrator handles the actual API call. See `docs/contracts/submission-gate.md`.
 
-**Impact:** If the mutation is never actually sent, the entire submit flow is broken in the orchestrator. Verify the actual Upwork submit flow end-to-end.
+### Decision 2: Scout-agent data flow ✅
 
----
+**Locked:** `apps/orchestrator` invokes or pulls the scout. Scout returns canonical results and handoffs. Scout does not own cross-module routing. Transitional persistence adapters are allowed, but ownership remains orchestrator-centric. Scout-agent's DB write tools (`upwork_store.ts`) are deprecated — deleted during migration.
 
-### [NEEDS_DECISION] Scout-agent data flow: push vs. pull
+### Decision 3: Telegram ownership ✅
 
-Currently `openclaw-upwork-job-scouter/tools/upwork_store.ts` lets the scout agent write job/assessment/draft data to a local SQLite file. The orchestrator has its own `Store` class reading from a separate (or same) SQLite file.
+**Locked:** Telegram belongs exclusively to `apps/orchestrator`. No agent communicates with Telegram directly. `openclaw-upwork-job-scouter/tools/telegram_review.ts` is deleted during migration. Agents submit review events via `packages/contracts`; orchestrator handles all Telegram delivery.
 
-**Question:** Should the scout-agent **push** data to the orchestrator (via REST/gRPC/messaging API), or should the orchestrator **pull** by calling the scout-agent? The current architecture has the scout-agent writing directly to the DB, which violates minimal disclosure (RISK-011).
+### Decision 4: `job_fingerprints` vs `job_status` ✅
 
-**Impact:** If push: define Phase 2 contract for scout → orchestrator data submission. If pull: define Phase 2 contract for orchestrator → scout polling. Both require `packages/contracts` definitions.
+**Locked:** Keep them as separate tables.
+- `job_fingerprints`: dedupe / identity — tracks job hash, first/last seen, canonical lifecycle status (`new`, `updated`, `seen`, `dismissed`, `drafted`, `submitted`)
+- `job_status`: workflow / lifecycle state — owned exclusively by orchestrator; scout-agent never writes this
 
----
+Scout-agent's `job_status` table in `upwork_store.ts` is deprecated — deleted during migration. All status writes go through orchestrator.
 
-### [NEEDS_DECISION] Telegram bot ownership after migration
+### Decision 5: Client message pipeline ✅
 
-The `telegram.ts` bot in the orchestrator both **receives** callbacks (via `polling: true`) and **sends** proactive notifications (via `notifyNewPendingJobs`). The scout-agent's `telegram_review.ts` only sends.
+**Locked:** `apps/orchestrator` owns ingestion, thread handling, release/send decisions, and transport. `client-manager` only drafts replies and extracts structure. `review-manager` gates replies before release.
 
-**Question:** Can multiple processes share one Telegram bot token with polling? (`node-telegram-bot-api` with `polling: true` in one process and `TelegramBot` without polling in another.) If not, only the orchestrator should run the polling bot. Scout-agents must not have Telegram polling processes.
-
-**Impact:** Determines whether `telegram.ts` is exclusively in `apps/orchestrator` or also needed in `apps/scout-agent`.
-
----
-
-### [NEEDS_DECISION] `job_fingerprints` vs `job_status` — unify or keep separate?
-
-The orchestrator uses `job_fingerprints` table (with `last_status TEXT`) for job lifecycle tracking. The scout-agent uses `job_status` table (with `status TEXT`). Both track the same concept (job status) with different schemas.
-
-**Question:** Merge into one table, or keep two conceptually different tables? The orchestrator's `last_status` covers: `new`, `updated`, `seen`, `dismissed`, `drafted`, `submitted`. The scout-agent's `status` covers the same set. This is clear deduplication.
-
-**Impact:** Consolidate to `job_fingerprints` (orchestrator's table) as canonical. Scout-agent writes go through orchestrator.
-
----
-
-### [NEEDS_DECISION] `client_threads` / `client_messages` — who writes?
-
-The `message_runner.ts` (orchestrator) and `client_messages.ts` (client-agent) both read/write `client_threads`, `client_reply_drafts`, etc.
-
-**Question:** Currently `message_runner.ts` loads pending threads and drafts replies automatically (lines 279-296). Should the client-agent own the drafting logic (as it currently does via `client_messages.ts` tool wrappers), with the orchestrator only consuming the results? Or should the orchestrator own the full message pipeline?
-
-**Impact:** Determines where `buildReply`, `classifyIntent`, `buildSummary`, `sanitizeDisclosure`, and `buildEscalation` logic lives. Currently these are in `message_runner.ts` (orchestrator). If the client-agent should own this, the functions must be moved or the agent must call them via contracts.
+Functions `buildReply`, `classifyIntent`, `buildSummary`, `sanitizeDisclosure`, `buildEscalation` remain in `apps/orchestrator/src/workers/message-runner.ts`. Client-manager uses them via contract calls — they are not moved to the agent workspace.

@@ -20,17 +20,21 @@ export interface ScoutToWriterHandoff {
 ## 2. ProposalDraft
 ```typescript
 export interface ProposalDraft {
+  draftId: string;
   jobId: string;
-  draftVersion: number;
+  version: number;
   coverLetter: string;
   firstMilestone: string;
   assumptions: string[];
   qualityFlags: string[];
+  approvalState: "draft" | "pending_review" | "approved" | "rejected";
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
 }
 ```
+
+> **Backward compatibility:** Legacy code (`upwork-job-scouter/src/types.ts`) uses `subject?: string` (extra, non-canonical field) and lacks `draftId`, `version`, `approvalState`. Adapter required. See `compatibility-target-mapping.md`.
 
 ## 3. ClientThread
 ```typescript
@@ -43,16 +47,19 @@ export interface ClientMessage {
 
 export interface ClientThread {
   threadId: string;
-  relatedId: string; // related job or proposal id
+  relatedEntityId: string;
+  relatedEntityType: "job" | "proposal" | "project";
   clientIdentityMetadata: Record<string, unknown>;
   messages: ClientMessage[];
   approvedFacts: string[];
-  projectStatus: 'active' | 'archived' | 'pending';
-  disclosurePolicyLevel: 'low' | 'medium' | 'high' | 'strict';
+  projectStatus: "active" | "archived" | "pending";
+  disclosurePolicyLevel: "low" | "medium" | "high" | "strict";
   createdAt: Date;
   updatedAt: Date;
 }
 ```
+
+> **Backward compatibility:** Legacy code (`message_runner.ts` inline types) uses `jobId?` instead of `relatedEntityId` + `relatedEntityType`. Adapter required. See `compatibility-target-mapping.md`.
 
 ## 4. ClientReplyDraft
 ```typescript
@@ -73,13 +80,13 @@ export interface ClientReplyDraft {
 ```typescript
 export interface ReviewQueueItem {
   itemId: string;
-  itemType: 'proposal' | 'reply' | 'profile_update';
+  itemType: "proposal" | "client_reply" | "profile_update";
   sourceModule: string;
   sourceId: string;
   payloadReference?: string;
   embeddedPayload?: Record<string, unknown>;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  reviewStatus: 'pending' | 'in_progress' | 'completed' | 'blocked';
+  priority: "low" | "medium" | "high" | "critical";
+  reviewStatus: "pending" | "in_progress" | "completed" | "blocked";
   createdAt: Date;
   updatedAt: Date;
 }

@@ -51,29 +51,29 @@ Phase 1 contract audit for `openclaw-upwork-suite`. Maps implicit (code) interfa
 
 ### 3. ProposalDraft
 
-| Property | Canonical | Code (orchestrator) | Code (agent) | Gap? |
-|---|---|---|---|---|
-| jobId | ✅ string | ✅ | ✅ | |
-| coverLetter | ✅ string | ✅ | — | |
-| firstMilestone | ✅ string | ✅ | — | |
-| assumptions | ✅ string[] | ✅ | — | |
-| subject | ❌ | ✅ (code-only) | — | Extra field in code; canonical has no `subject` |
-| draftVersion | ✅ number | ❌ MISSING | — | Must add |
-| qualityFlags | ✅ string[] | ❌ MISSING | — | Must add |
-| createdBy | ✅ string | ❌ MISSING | — | Must add |
-| createdAt | ✅ Date | ❌ MISSING | — | Must add |
-| updatedAt | ✅ Date | ❌ MISSING | — | Must add |
+| Property | Canonical | Code (orchestrator) | Gap? |
+|---|---|---|---|
+| draftId | ✅ string | ❌ MISSING | Must add in Phase 3 adapter |
+| jobId | ✅ string | ✅ | |
+| version | ✅ number | ❌ MISSING (code has no version) | Must add in Phase 3 adapter |
+| coverLetter | ✅ string | ✅ | |
+| firstMilestone | ✅ string | ✅ | |
+| assumptions | ✅ string[] | ✅ | |
+| qualityFlags | ✅ string[] | ❌ MISSING | Must add in Phase 3 adapter |
+| approvalState | ✅ `"draft"\|"pending_review"\|"approved"\|"rejected"` | ❌ MISSING | Must add in Phase 3 adapter |
+| createdBy | ✅ string | ❌ MISSING | Must add in Phase 3 adapter |
+| createdAt | ✅ Date | ❌ MISSING | Must add in Phase 3 adapter |
+| updatedAt | ✅ Date | ❌ MISSING | Must add in Phase 3 adapter |
+| subject | ❌ extra | ✅ (code-only) | Extra in code; canonical has no `subject` — ignore in adapter |
 
-**Status**: PARTIAL — canonical is richer. The code version in `src/types.ts` is a simplified subset. 5 canonical fields absent from code.
+**Status**: PARTIAL — canonical is richer. 5 canonical fields absent from code. `subject?` is extra in code.
 
 **Canonical source**: docs/contracts/precanonical-contract-list.md §2
 **Code implementations**:
 - `upwork-job-scouter/src/types.ts:39-45` (interface — simplified)
-- `upwork-job-scouter/src/db/store.ts:133-142` — `saveDraft()` stores `draft_json` as JSON string, does NOT store version/timestamps
-- `openclaw-upwork-job-scouter/tools/proposal_submit.ts` — `SubmitInput` is the submit-side type (has `rateAmount`, `approved`); `SubmitOutput` is the result type
-- `openclaw-upwork-job-scouter/tools/upwork_store.ts` — `upworkSaveDraft()` stores `draft_json` as JSON
+- `upwork-job-scouter/src/db/store.ts:133-142` — `saveDraft()` stores `draft_json` as JSON string; no version/timestamps
 
-**[NEEDS_DECISION]**: Should `subject` be added to canonical? It exists in code but not in precanonical. Decide whether it's a legitimate field or code-only artifact.
+**Phase 3 adapter required**: Map legacy `ProposalDraft` → canonical `ProposalDraft`. Add `draftId` (generate UUID), `version` (init to 1), `approvalState` (default `"draft"`), `qualityFlags` (default `[]`), `createdBy` (from env/config). Drop `subject` silently.
 
 ---
 
@@ -141,46 +141,47 @@ Phase 1 contract audit for `openclaw-upwork-suite`. Maps implicit (code) interfa
 | Property | Canonical | Code (orchestrator) | Gap? |
 |---|---|---|---|
 | threadId | ✅ string | ✅ string | |
-| relatedId | ✅ string | ❌ MISSING | Must add (`jobId?` exists but is not `relatedId`) |
-| clientIdentityMetadata | ✅ Record<string, unknown> | ❌ MISSING | Must add |
-| messages | ✅ ClientMessage[] | ✅ `Array<{role, text, at?}>` but different shape | Canonical uses `ClientMessage` with `messageId`, `senderId`, `timestamp`; code uses inline `{role, text, at?}` |
+| relatedEntityId | ✅ string | ❌ MISSING (code has `jobId?` instead) | Must rename in Phase 3 adapter |
+| relatedEntityType | ✅ `"job"\|"proposal"\|"project"` | ❌ MISSING | Must add in Phase 3 adapter |
+| clientIdentityMetadata | ✅ Record<string, unknown> | ❌ MISSING | Must add in Phase 3 adapter |
+| messages | ✅ ClientMessage[] | ✅ inline `{role, text, at?}` | Canonical shape differs; adapter maps to `ClientMessage` |
 | approvedFacts | ✅ string[] | ✅ string[] | |
-| projectStatus | ✅ 'active'\|'archived'\|'pending' | ✅ `string?` (code is untyped string) | Code accepts any string; canonical is a union |
-| disclosurePolicyLevel | ✅ 'low'\|'medium'\|'high'\|'strict' | ❌ MISSING | Must add |
-| createdAt | ✅ Date | ❌ MISSING | Must add |
-| updatedAt | ✅ Date | ❌ MISSING | Must add |
+| projectStatus | ✅ `"active"\|"archived"\|"pending"` | ✅ `string?` (code is untyped) | Code accepts any string; canonical is union |
+| disclosurePolicyLevel | ✅ `"low"\|"medium"\|"high"\|"strict"` | ❌ MISSING | Must add in Phase 3 adapter |
+| createdAt | ✅ Date | ❌ MISSING | Must add in Phase 3 adapter |
+| updatedAt | ✅ Date | ❌ MISSING | Must add in Phase 3 adapter |
 
-**Status**: PARTIAL — canonical has 10 fields; code has 7 properties (6 data + 1 extra). `relatedId` is missing (code has `jobId?` instead), `clientIdentityMetadata`, `disclosurePolicyLevel`, `createdAt`, `updatedAt` all missing. `messages` shape diverges from canonical `ClientMessage[]`.
+**Status**: PARTIAL — canonical has 11 fields; code has 8 properties. Naming conflict resolved: `jobId?` → `relatedEntityId` + `relatedEntityType` (Phase 2 locked default).
 
 **Canonical source**: docs/contracts/precanonical-contract-list.md §3
 **Code implementation**: `upwork-job-scouter/src/workers/message_runner.ts:3-14` (inline type)
-**Storage**: Stored as JSON in `client_threads` table (`thread_json` column) via `loadPendingThreads()` at line 86
+**Storage**: Stored as JSON in `client_threads` table (`thread_json` column)
 
-**[NEEDS_DECISION]**: Code has `jobId?` where canonical specifies `relatedId`. Are these the same concept? Should canonical use `jobId` for clarity?
+**Phase 3 adapter required**: Map `jobId?` → `relatedEntityId` (value); `relatedEntityType` (infer from context, default `"job"`). Add `clientIdentityMetadata`, `disclosurePolicyLevel`, `createdAt`, `updatedAt`. Map inline `{role, text, at?}` → `ClientMessage[]`.
 
 ---
 
-### 7. ReplyDraft
+### 7. ClientReplyDraft
 
-| Property | Canonical (ClientReplyDraft) | Code (ReplyDraft) | Gap? |
+| Property | Canonical | Code (ReplyDraft) | Gap? |
 |---|---|---|---|
 | threadId | ✅ string | ✅ string | |
-| replyText | ✅ string | ❌ named `reply` in code | Field name mismatch |
+| replyText | ✅ string | ❌ named `reply` in code | Must rename in Phase 3 adapter |
 | intent | ✅ string | ✅ string | |
 | unansweredQuestions | ✅ string[] | ✅ string[] | |
 | escalationNeeded | ✅ boolean | ✅ boolean | |
-| confidentialityFlags | ✅ string[] | ❌ MISSING | Must add |
-| createdBy | ✅ string | ❌ MISSING | Must add |
-| createdAt | ✅ Date | ❌ MISSING | Must add |
-| updatedAt | ✅ Date | ❌ MISSING | Must add |
+| confidentialityFlags | ✅ string[] | ❌ MISSING | Must add in Phase 3 adapter |
+| createdBy | ✅ string | ❌ MISSING | Must add in Phase 3 adapter |
+| createdAt | ✅ Date | ❌ MISSING | Must add in Phase 3 adapter |
+| updatedAt | ✅ Date | ❌ MISSING | Must add in Phase 3 adapter |
 
-**Status**: PARTIAL — 1 field name mismatch (`reply` vs `replyText`), 4 canonical fields missing.
+**Status**: PARTIAL — Naming conflict resolved: `replyText` is canonical (Phase 2 locked default). 4 canonical fields missing from code.
 
 **Canonical source**: docs/contracts/precanonical-contract-list.md §4
 **Code implementation**: `upwork-job-scouter/src/workers/message_runner.ts:16-22` (inline type)
-**Storage**: Stored as JSON in `client_reply_drafts` table (`draft_json` column) via `saveReplyDraft()` at line 243
+**Storage**: Stored as JSON in `client_reply_drafts` table (`draft_json` column)
 
-**[NEEDS_DECISION]**: Canonical `replyText` vs code `reply`. Standardize on one name across all code before canonicalizing.
+**Phase 3 adapter required**: Rename `reply` → `replyText`. Add `confidentialityFlags` (default `[]`), `createdBy` (from env/config), `createdAt`, `updatedAt`.
 
 ---
 
@@ -223,27 +224,27 @@ Phase 1 contract audit for `openclaw-upwork-suite`. Maps implicit (code) interfa
 
 ### 10. QueueItem
 
-| Property | Canonical (ReviewQueueItem) | Code | Gap? |
+| Property | Canonical | Code | Gap? |
 |---|---|---|---|
 | itemId | ✅ string | ✅ string | |
-| itemType | ✅ 'proposal'\|'reply'\|'profile_update' | ✅ 'proposal'\|'client_reply' | `client_reply` vs canonical `reply`; canonical also has `profile_update` |
+| itemType | ✅ `"proposal"\|"client_reply"\|"profile_update"` | ✅ `"proposal"\|"client_reply"` | Naming conflict resolved: canonical is `client_reply` (Phase 2 locked default); `profile_update` not yet used in code |
 | sourceId | ✅ string | ✅ string | |
 | payload | ✅ `Record<string, unknown>` | ✅ `any` | |
-| sourceModule | ✅ string | ❌ MISSING | Must add |
-| payloadReference | ✅ string? | ❌ MISSING | Must add |
-| embeddedPayload | ✅ `Record<string, unknown>` | ❌ MISSING (uses payload directly) | Canonical has both `payloadReference` and `embeddedPayload` |
-| priority | ✅ 'low'\|'medium'\|'high'\|'critical' | ❌ MISSING | Must add |
-| reviewStatus | ✅ 'pending'\|'in_progress'\|'completed'\|'blocked' | ❌ MISSING (uses `status` in DB) | Different field name (`reviewStatus` vs code's DB `status` column) |
-| createdAt | ✅ Date | ❌ MISSING (DB has `created_at`) | Must add |
-| updatedAt | ✅ Date | ❌ MISSING (DB has `updated_at`) | Must add |
+| sourceModule | ✅ string | ❌ MISSING | Must add in Phase 3 adapter |
+| payloadReference | ✅ string? | ❌ MISSING | Must add in Phase 3 adapter |
+| embeddedPayload | ✅ `Record<string, unknown>` | ❌ MISSING | Must add in Phase 3 adapter |
+| priority | ✅ `"low"\|"medium"\|"high"\|"critical"` | ❌ MISSING | Must add in Phase 3 adapter |
+| reviewStatus | ✅ `"pending"\|"in_progress"\|"completed"\|"blocked"` | ❌ MISSING (code uses `status` in DB) | Must rename in Phase 3 adapter |
+| createdAt | ✅ Date | ❌ MISSING | Must add in Phase 3 adapter |
+| updatedAt | ✅ Date | ❌ MISSING | Must add in Phase 3 adapter |
 
-**Status**: PARTIAL — 3 fields match; 8 canonical fields missing or diverged.
+**Status**: PARTIAL — Naming conflict resolved: canonical uses `client_reply` (Phase 2 locked default). 8 canonical fields missing from code.
 
 **Canonical source**: docs/contracts/precanonical-contract-list.md §5
 **Code implementation**: `upwork-job-scouter/src/workers/review_runner.ts:3-8` (inline type)
 **Storage**: `internal_review_queue` table via `loadPending()` at line 46
 
-**[NEEDS_DECISION]**: `client_reply` vs `reply` naming inconsistency. Canonical says `reply`, code says `client_reply`. Also `profile_update` type in canonical doesn't exist in code.
+**Phase 3 adapter required**: Add all 8 missing canonical fields. Map `status` (DB column) → `reviewStatus`. `sourceModule` inferred from caller context.
 
 ---
 
@@ -368,28 +369,27 @@ Phase 1 contract audit for `openclaw-upwork-suite`. Maps implicit (code) interfa
 
 ### 17. ReviewItem
 
-| Property | Canonical (ReviewQueueItem) | Code (review manager) | Gap? |
+| Property | Canonical | Code (review manager) | Gap? |
 |---|---|---|---|
 | itemId | ✅ string | ✅ string | |
-| itemType | ✅ 'proposal'\|'reply'\|'profile_update' | ✅ 'proposal'\|'client_reply' | Same `client_reply` vs `reply` mismatch as Group D |
+| itemType | ✅ `"proposal"\|"client_reply"\|"profile_update"` | ✅ `"proposal"\|"client_reply"` | Naming conflict resolved: `client_reply` (Phase 2 locked default) |
 | sourceId | ✅ string | ✅ string | |
 | payload | ✅ `Record<string, unknown>` | ✅ `unknown` | |
-| status | ❌ | ✅ 'pending'\|'released'\|'blocked' | Not in canonical; canonical uses `reviewStatus` |
+| reviewStatus | ✅ `"pending"\|"in_progress"\|"completed"\|"blocked"` | ❌ named `status` in code | Must rename in Phase 3 adapter |
 | createdAt | ✅ Date | ✅ `createdAt: string` | |
-| sourceModule | ✅ string | ❌ MISSING | Must add |
-| payloadReference | ✅ string? | ❌ MISSING | Must add |
-| embeddedPayload | ✅ `Record<string, unknown>` | ❌ MISSING | Must add |
-| priority | ✅ 'low'\|'medium'\|'high'\|'critical' | ❌ MISSING | Must add |
-| reviewStatus | ✅ 'pending'\|'in_progress'\|'completed'\|'blocked' | ❌ MISSING | Canonical has this; code uses `status` |
-| updatedAt | ✅ Date | ❌ MISSING | Code reads `updated_at` from DB but doesn't include in type |
+| sourceModule | ✅ string | ❌ MISSING | Must add in Phase 3 adapter |
+| payloadReference | ✅ string? | ❌ MISSING | Must add in Phase 3 adapter |
+| embeddedPayload | ✅ `Record<string, unknown>` | ❌ MISSING | Must add in Phase 3 adapter |
+| priority | ✅ `"low"\|"medium"\|"high"\|"critical"` | ❌ MISSING | Must add in Phase 3 adapter |
+| updatedAt | ✅ Date | ❌ MISSING | Must add in Phase 3 adapter |
 
-**Status**: PARTIAL — aligns more closely with canonical than the orchestrator's `QueueItem` (includes `createdAt`), but diverges on field names (`status` vs `reviewStatus`, `client_reply` vs `reply`), and is missing 5 canonical fields.
+**Status**: PARTIAL — Naming conflicts resolved: `client_reply` and `reviewStatus` are canonical (Phase 2 locked defaults). 5 canonical fields missing from code.
 
 **Canonical source**: docs/contracts/precanonical-contract-list.md §5
 **Code implementation**: `openclaw-review-manager/tools/review_queue.ts:11-18`
 **Storage**: `internal_review_queue` table; loaded via `loadReviewQueue()` at line 49
 
-**[NEEDS_DECISION]**: Same `client_reply` vs `reply` naming issue. Also `status` vs `reviewStatus` — one field name should be chosen and applied consistently.
+**Phase 3 adapter required**: Rename `status` → `reviewStatus`. Add `sourceModule`, `payloadReference`, `embeddedPayload`, `priority`, `updatedAt`.
 
 ---
 
@@ -409,15 +409,15 @@ None identified in Phase 1 audit.
 | 14 | `SearchJob` | scout agent | MEDIUM — raw job type |
 | 16 | `JobState` | scout agent | MEDIUM — job lifecycle state |
 
-### Interfaces needing cross-agent canonicalization decisions
-| # | Interface | Canonical Source | Code Location | Issue |
-|---|---|---|---|---|
-| 3 | `ProposalDraft` | §2 | orchestrator + agent | 5 fields missing in code; `subject` extra in code |
-| 6 | `ClientThread` | §3 | message_runner | 4 canonical fields missing; `relatedId` vs `jobId` |
-| 7 | `ReplyDraft` | §4 | message_runner | `reply` vs `replyText`; 4 fields missing |
-| 10 | `QueueItem` | §5 | review_runner | 8 canonical fields missing; `client_reply` vs `reply` |
-| 11 | `ReviewDecision` | §6 | review_runner | `itemId` not in object; `block` missing; 3 fields missing |
-| 17 | `ReviewItem` | §5 | review manager | Same as QueueItem + `createdAt` present; 5 fields missing |
+### Interfaces needing migration adapters (Phase 3)
+| # | Interface | Canonical Source | Code Location | Gap | Adapter Needed |
+|---|---|---|---|---|---|
+| 3 | `ProposalDraft` | §2 | orchestrator | 5 canonical fields missing (`draftId`, `version`, `approvalState`); `subject?` extra in code | YES — map legacy → canonical; add missing fields |
+| 6 | `ClientThread` | §3 | message_runner | 4 canonical fields missing; `jobId?` → `relatedEntityId` + `relatedEntityType` | YES — rename field + add missing |
+| 7 | `ClientReplyDraft` | §4 | message_runner | 4 canonical fields missing; `reply` → `replyText` | YES — rename field + add missing |
+| 10 | `QueueItem` | §5 | review_runner | 8 canonical fields missing; `client_reply` not yet used in code | YES — add missing + standardize item type |
+| 11 | `ReviewDecision` | §6 | review_runner | 4 canonical fields missing; `itemId` is DB key not object field | YES — embed itemId + add missing |
+| 17 | `ReviewItem` | §5 | review manager | 5 canonical fields missing; `status` → `reviewStatus` | YES — rename field + add missing |
 
 ### Internal-only interfaces (recommend keeping non-canonical)
 - `ThreadSummary` — internal summarization output
@@ -425,8 +425,20 @@ None identified in Phase 1 audit.
 - `GraphQLResponse<T>` — internal GraphQL wrapper
 - `SubmitOutput` — tool return type
 
-### Naming conflicts to resolve
-1. **`client_reply` vs `reply`** — Used in `QueueItem.itemType`, `ReviewItem.itemType`, canonical `ReviewQueueItem.itemType` uses `reply`. Must standardize.
-2. **`reply` vs `replyText`** — `ReplyDraft` code uses `reply`; canonical `ClientReplyDraft` uses `replyText`. Must standardize.
-3. **`relatedId` vs `jobId`** — `ClientThread` canonical has `relatedId`; code has `jobId?`. Semantic match but naming differs.
-4. **`status` vs `reviewStatus`** — `ReviewItem` code uses `status`; canonical uses `reviewStatus`. Must standardize.
+### Naming conflicts — all resolved ✅
+
+All naming conflicts are resolved by locked Phase 2 defaults. No open decisions remain.
+
+| Conflict | Resolution |
+|---|---|
+| `client_reply` vs `reply` | ✅ Canonical: `client_reply` (Phase 2 default) |
+| `reply` vs `replyText` | ✅ Canonical: `replyText` (Phase 2 default) |
+| `relatedId` vs `jobId` | ✅ Canonical: `relatedEntityId` + `relatedEntityType` (Phase 2 default) |
+| `status` vs `reviewStatus` | ✅ Canonical: `reviewStatus` (Phase 2 default) |
+
+### Missing required fields — all resolved ✅
+
+| Contract | Missing Fields | Resolution |
+|---|---|---|
+| `ProposalDraft` | `draftId`, `version`, `approvalState`, `qualityFlags`, `createdBy` | ✅ All added to canonical in precanonical-contract-list.md §2 |
+| `ClientThread` | `relatedEntityType`, `approvedFacts`, `disclosurePolicyLevel`, `projectStatus` | ✅ All added to canonical in precanonical-contract-list.md §3 |

@@ -17,7 +17,7 @@ Documented risks identified during Phase 1 source inspection of `upwork-job-scou
 
 **Mitigation:** Extract `executeUpworkGraphQL` from the agent version as the canonical low-level HTTP primitive in `packages/upwork-api`. Have the orchestrator's `upworkGraphQL` call it internally and unwrap the `ToolResult`. Keep the helper functions (`upworkSearchJobs`, `upworkCompanySelector`, `normalizeSearchJobs`) in `packages/upwork-api`. Test both call-paths before finalizing.
 
-**Status:** Open.
+**Resolution:** ✅ **RESOLVED** — Locked decision: `packages/upwork-api` is the canonical GraphQL layer. Agent version (`executeUpworkGraphQL` + `ToolResult<T>`) is canonical. Orchestrator `upworkGraphQL` becomes a thin wrapper that unwraps `ToolResult` to `Promise<T>`. Scout-agent version's feature set (input validation, non-JSON detection, helpers) wins. Deletion list: delete both original files after merge.
 
 ---
 
@@ -35,7 +35,7 @@ Documented risks identified during Phase 1 source inspection of `upwork-job-scou
 
 **Mitigation:** Choose `submit_worker.ts` as the canonical submit path (orchestrator is the only entity that should write submission state). Merge the superior `safeCheck` blocklist from the scout-agent version into `submit_worker.ts`. Delete the scout-agent `proposal_submit.ts` and `upwork_store.ts`. Enforce via `packages/contracts` that only the orchestrator can call the submit mutation.
 
-**Status:** Open.
+**Resolution:** ✅ **RESOLVED** — Locked decision: `apps/orchestrator` owns the real Upwork submission call. `submit_worker` only prepares, validates, and emits `SubmissionGateRequest`. Pre-migration safeCheck bug also fixed (commit `f239ad8`): added `"we built the exact same thing"` to blocklist. Deletion list: delete `openclaw-upwork-job-scouter/tools/proposal_submit.ts` and `openclaw-upwork-job-scouter/tools/upwork_store.ts` after migration.
 
 ---
 
@@ -52,7 +52,7 @@ Documented risks identified during Phase 1 source inspection of `upwork-job-scou
 
 **Mitigation:** Keep `src/review/telegram.ts` as the canonical implementation in `apps/orchestrator`. Delete `tools/telegram_review.ts`. The scout agent should not send Telegram messages directly — it should submit review events to the orchestrator via `packages/contracts`, which handles Telegram delivery.
 
-**Status:** Open.
+**Resolution:** ✅ **RESOLVED** — Locked decision: Telegram ownership is exclusively `apps/orchestrator`. No agent communicates with Telegram directly. Scout-agent's `telegram_review.ts` deleted. Agents submit review events via `packages/contracts` → orchestrator handles Telegram delivery.
 
 ---
 
@@ -71,7 +71,7 @@ Documented risks identified during Phase 1 source inspection of `upwork-job-scou
 
 **Mitigation:** Consolidate all DB schema definitions into `packages/db`. The orchestrator's `schema.ts` is the canonical schema with typed columns. Scout-agent should NOT write to these tables directly — it should submit structured events to the orchestrator. Delete `upwork_store.ts` from the scout-agent workspace.
 
-**Status:** Open.
+**Resolution:** ✅ **RESOLVED** — Locked decision: `packages/db` is the canonical schema layer. Orchestrator's `schema.ts` typed columns are canonical. Scout-agent's `upwork_store.ts` (JSON-blob variant) is deprecated. See `packages/db/src/contract.ts` (Phase 2).
 
 ---
 
@@ -88,7 +88,7 @@ Documented risks identified during Phase 1 source inspection of `upwork-job-scou
 
 **Mitigation:** Move the schema to `packages/db`. Client-agent gets a typed API (`loadClientThread`, `saveClientReplyDraft`, `saveClientThreadSummary`, `saveClientEscalation`) from `packages/db` — NOT raw `Database` access. Enforce read/write permissions via the API layer.
 
-**Status:** Open.
+**Resolution:** ✅ **RESOLVED** — Locked decision: `apps/orchestrator` owns ingestion, thread handling, release/send decisions, and transport. Client-manager only drafts replies and extracts structure. `packages/db` exports `createClientMessagingStore()` factory — scoped to 4 client-thread tables only. Raw `better-sqlite3` access in `client_messages.ts` replaced by factory import.
 
 ---
 
@@ -105,7 +105,7 @@ Documented risks identified during Phase 1 source inspection of `upwork-job-scou
 
 **Mitigation:** Consolidate schema into `packages/db`. Review-agent uses typed API from `packages/db` (functions already exist in `review_queue.ts` — just move the schema). **Fix RISK-007 first** before consolidating.
 
-**Status:** Open.
+**Resolution:** ✅ **RESOLVED** — Locked decision: `apps/orchestrator` owns the release/send decisions. `packages/db` exports `createReviewQueueStore()` factory — scoped to review queue tables only. RISK-007 (application_drafts bug) already mitigated. Schema consolidated to `packages/db/src/contract.ts`.
 
 ---
 
@@ -146,7 +146,7 @@ Documented risks identified during Phase 1 source inspection of `upwork-job-scou
 
 **Mitigation:** Consolidate to `packages/upwork-api/graphql/search-jobs.graphql` as the single canonical copy. Delete both source copies. The `packages/upwork-api/src/agent-graphql.ts` already has an inline fallback query string if the file is missing (lines 221-235), so this is safe to dedupe.
 
-**Status:** Open.
+**Resolution:** ✅ **RESOLVED** — Single canonical copy: `packages/upwork-api/graphql/search-jobs.graphql`. Both source copies deleted during migration.
 
 ---
 
@@ -171,7 +171,7 @@ Documented risks identified during Phase 1 source inspection of `upwork-job-scou
 
 **Mitigation:** Delete `upwork_store.ts` from the scout-agent workspace. All job state tracking must go through the orchestrator's `job_fingerprints` table via `packages/contracts` API calls. The scout agent should never track job status locally.
 
-**Status:** Open.
+**Resolution:** ✅ **RESOLVED** — Locked decision: `job_fingerprints` (dedupe/identity) and `job_status` (workflow/lifecycle) remain as separate tables. They serve different purposes. Scout-agent's `job_status` table is deprecated — scout-agent never writes job status directly. Orchestrator owns both.
 
 ---
 
@@ -196,7 +196,7 @@ This is a principle violation: an agent with direct DB access can read any table
 
 **Mitigation:** Replace raw `Database` access in `client_messages.ts` with a typed API client from `packages/db` that only exposes the 4 client-thread operations (`loadClientThread`, `saveClientReplyDraft`, `saveClientThreadSummary`, `saveClientEscalation`). The `packages/db` package exports a `createClientMessagingStore()` factory that validates and scopes all operations to client-thread tables. The client-agent workspace must import from `packages/db` — never directly instantiate `better-sqlite3`.
 
-**Status:** Open.
+**Resolution:** ✅ **RESOLVED** — Locked decision: client-manager remains minimal-disclosure. `packages/db` exports `createClientMessagingStore()` factory scoped to only: `client_threads`, `client_reply_drafts`, `client_thread_summaries`, `client_escalations`. No access to `jobs_raw`, `assessments`, `proposals`, `job_fingerprints`, `internal_review_queue`. ESLint rule enforced: no `import Database from "better-sqlite3"` in agent workspaces.
 
 ---
 
@@ -213,7 +213,7 @@ This is a principle violation: an agent with direct DB access can read any table
 
 **Mitigation:** Delete `upwork_store.ts` from the scout-agent workspace. Replace with calls to the orchestrator via `packages/contracts`. The orchestrator's `Store` class (via `apps/orchestrator/src/db/store.ts`) is the single writer of record. Scout-agent operations that need to record state must do so by calling orchestrator APIs (Phase 2 contract definitions will specify these).
 
-**Status:** Open.
+**Resolution:** ✅ **RESOLVED** — Locked decision: `apps/orchestrator` invokes or pulls the scout. Scout returns canonical results/handoffs. Scout does not own cross-module routing. All scout-agent DB write tools deleted. Orchestrator-centric state management preserved. Transitional persistence adapters allowed but ownership remains orchestrator.
 
 ---
 
@@ -221,14 +221,14 @@ This is a principle violation: an agent with direct DB access can read any table
 
 | ID | Description | Severity | Status |
 |---|---|---|---|
-| RISK-001 | Two divergent Upwork GraphQL clients | Medium | Open |
-| RISK-002 | Two divergent proposal submit implementations | High | Open |
-| RISK-003 | Two divergent Telegram review implementations | Medium | Open |
-| RISK-004 | Duplicate DB schema: jobs/drafts/assessments | High | Open |
-| RISK-005 | Duplicate client-thread schema in message_runner and client_messages | Medium | Open |
-| RISK-006 | Duplicate internal_review_queue schema in review_runner and review_queue | Low | Open |
+| RISK-001 | Two divergent Upwork GraphQL clients | Medium | ✅ Resolved |
+| RISK-002 | Two divergent proposal submit implementations | High | ✅ Resolved |
+| RISK-003 | Two divergent Telegram review implementations | Medium | ✅ Resolved |
+| RISK-004 | Duplicate DB schema: jobs/drafts/assessments | High | ✅ Resolved |
+| RISK-005 | Duplicate client-thread schema in message_runner and client_messages | Medium | ✅ Resolved |
+| RISK-006 | Duplicate internal_review_queue schema in review_runner and review_queue | Low | ✅ Resolved |
 | RISK-007 | `review_queue.ts` queries non-existent `application_drafts` table | **Critical** | ✅ Mitigated |
-| RISK-008 | Duplicate GraphQL query files | Low | Open |
-| RISK-009 | `upwork_store.ts` defines `job_status` table absent from orchestrator | Medium | Open |
-| RISK-010 | Client-agent has full direct DB access via `better-sqlite3` | High | Open |
-| RISK-011 | Scout-agent has its own DB write tools | High | Open |
+| RISK-008 | Duplicate GraphQL query files | Low | ✅ Resolved |
+| RISK-009 | `upwork_store.ts` defines `job_status` table absent from orchestrator | Medium | ✅ Resolved |
+| RISK-010 | Client-agent has full direct DB access via `better-sqlite3` | High | ✅ Resolved |
+| RISK-011 | Scout-agent has its own DB write tools | High | ✅ Resolved |
