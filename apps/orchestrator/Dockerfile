@@ -11,8 +11,8 @@ WORKDIR /app
 COPY node_modules ./node_modules
 COPY apps/orchestrator/src ./apps/orchestrator/src
 COPY apps/orchestrator/package.json ./apps/orchestrator/
-COPY apps/orchestrator/.env.example ./apps/orchestrator/.env 2>/dev/null || true
-COPY apps/orchestrator/data ./apps/orchestrator/data 2>/dev/null || true
+COPY apps/orchestrator/.env.example ./apps/orchestrator/.env
+COPY apps/orchestrator/data ./apps/orchestrator/data
 COPY packages ./packages
 COPY turbo.json ./turbo.json
 COPY pnpm-workspace.yaml ./
