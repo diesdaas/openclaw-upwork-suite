@@ -9,6 +9,7 @@
     "lint": "turbo run lint"
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
     "turbo": "latest",
     "typescript": "^5.9.3"
   }
