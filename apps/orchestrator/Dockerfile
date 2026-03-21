@@ -1,6 +1,4 @@
-FROM node:22-alpine
-
-RUN apk add --no-cache su-exec
+FROM node:22-trixie
 
 WORKDIR /app
 
@@ -16,4 +14,4 @@ COPY node_modules ./node_modules
 RUN chmod +x ./apps/orchestrator/entrypoint.sh
 
 WORKDIR /app
-ENTRYPOINT ["./apps/orchestrator/entrypoint.sh"]
+ENTRYPOINT ["/app/apps/orchestrator/entrypoint.sh"]
