@@ -7,7 +7,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@openclaw-upwork-suite/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@openclaw-upwork-suite/policies": ["../../packages/policies/src/index.ts"],
+      "@openclaw-upwork-suite/upwork-api": ["../../packages/upwork-api/src/index.ts"],
+      "@openclaw-upwork-suite/db": ["../../packages/db/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts"]
 }
