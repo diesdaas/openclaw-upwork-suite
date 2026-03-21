@@ -71,14 +71,12 @@ Phase 3 migrated all source code from the 4 legacy repos into the monorepo struc
 
 ---
 
-## What's Next (Phase 4)
+## What's Next (Phase 5)
 
-1. **Wire cross-package imports**: Replace local type shims in `apps/orchestrator/` with direct imports from `packages/shared-types`, `packages/policies`, `packages/upwork-api`
-2. **Phase 2 contract wiring**: Migrate `ProposalDraft` usage in `generateProposalDraft()` and `store.saveDraft()` to use locked `ProposalDraft` from `packages/shared-types`
-3. **Delete deprecated tool implementations**: Remove from source repos (not from suite — they were never migrated)
-4. **Native module builds**: Run `pnpm approve-builds` to allow `better-sqlite3` and `node-telegram-bot-api` native builds
-5. **Full integration test**: End-to-end test of the scouting cycle
-6. **Update `apps/orchestrator/src/types.ts`**: Replace with actual imports from `packages/shared-types`
+1. **Fill in Upwork credentials** in `apps/orchestrator/.env` on VM-1078
+2. **End-to-end smoke test** with real Upwork API calls
+3. **OpenClaw gateway-api surface** for narrow integration
+4. **Integration tests** for scouting cycle
 
 ---
 
@@ -87,5 +85,5 @@ Phase 3 migrated all source code from the 4 legacy repos into the monorepo struc
 These issues exist in the source repos and were not introduced by Phase 3 migration:
 
 1. **`.js` extension requirement** — Source repos use `moduleResolution: NodeNext` requiring explicit `.js` on relative imports. Suite uses `moduleResolution: bundler` to avoid this.
-2. **Native module builds** — `better-sqlite3` and `node-telegram-bot-api` require native compilation. `pnpm approve-builds` needed.
+2. **Native module builds** — `better-sqlite3` requires glibc 2.38 (resolved with `node:22-trixie` base image).
 3. **`@types/node` missing in source** — Source repos lack `@types/node`. Suite has it in orchestrator devDependencies.

@@ -1,10 +1,10 @@
-# **Claw your way to a job!**
+# **OpenClaw Upwork Suite v2**
 
-A modular Upwork automation and client-ops suite for scouting jobs, drafting proposals,
+A modular Upwork automation suite for scouting jobs, drafting proposals,
 reviewing outbound communication, and orchestrating controlled submission workflows.
 
-> Status: active development — architecture stabilized, dockerization in progress
-> Stack: TypeScript · pnpm workspaces · Turborepo · SQLite · Node.js
+> **Status:** Production deployment on VM-1078 via Docker Compose
+> **Stack:** TypeScript · pnpm workspaces · Turborepo · better-sqlite3 · node:22-trixie
 
 ---
 
@@ -23,16 +23,33 @@ The OpenClaw Upwork Suite handles the full Upwork workflow across clearly separa
 ```
 apps/
   orchestrator/  # main workflow coordinator — owns routing, transport, submission
-  scout-agent/    # job discovery and normalization
-  client-agent/   # client reply drafting
-  review-agent/   # review and gating
+  scout-agent/   # job discovery and normalization
+  client-agent/  # client reply drafting
+  review-agent/  # review and gating
 
 packages/
-  shared-types/   # canonical contracts and domain types
+  shared-types/  # canonical contracts and domain types
   db/            # shared DB utilities
   policies/       # policy enforcement (safeCheck, disclosure rules)
   upwork-api/    # Upwork API adapter
 ```
+
+---
+
+## Deployment (VM-1078)
+
+```bash
+# Full deploy (pulls latest, builds, starts, auto-commits changes)
+./deploy.sh
+
+# Docker Compose only
+docker compose build
+docker compose up -d
+docker compose ps
+docker compose logs -f orchestrator
+```
+
+**Deployed services:** orchestrator (healthy), postgres, redis
 
 ---
 
@@ -42,7 +59,7 @@ packages/
 2. **Orchestration over hidden coupling** — cross-module routing lives in orchestrator only
 3. **Review before release** — drafting and sending are always separate steps
 4. **Gate before submit** — SubmissionGateRequest is created before `submitProposal` is called
-5. **OpenClaw is a controller, not the infrastructure runtime** — the suite runs as its own stack
+5. **Autonomy within guardrails** — suite runs as its own Docker stack, OpenClaw connects via narrow API
 
 ---
 
@@ -106,8 +123,8 @@ Two concepts are intentionally kept separate:
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 9+
+- Node.js 22+
+- pnpm 10+
 - Docker (for containerized stack)
 
 ### Setup
@@ -115,53 +132,43 @@ Two concepts are intentionally kept separate:
 ```bash
 pnpm install
 cp apps/orchestrator/.env.example apps/orchestrator/.env
-pnpm turbo check    # typecheck all packages
-pnpm turbo build    # build all packages
+# Fill in credentials in .env
 ```
 
-### Run orchestrator locally
+### Run locally
 
 ```bash
 cd apps/orchestrator
 pnpm dev
 ```
 
-### Docker
-
-The suite runs as a standalone Docker Compose stack.
-OpenClaw is not required to control Docker — it connects via a narrow API surface only.
-
-```bash
-docker compose up --build
-```
-
-See `infra/docker/` for Dockerfiles and `docker-compose.yml` at the repo root.
-
-### OpenClaw Integration
-
-OpenClaw connects to this suite via a narrow API only.
-
-**Good fit:**
-- scoped job triggers
-- status reads
-- approval inputs
-
-**Not supported:**
-- direct docker exec
-- docker.sock access
-- transport ownership outside orchestrator
-
 ---
 
 ## Environment Variables
 
+Copy `apps/orchestrator/.env.example` to `apps/orchestrator/.env` and fill in:
+
 ```bash
-# apps/orchestrator
-DATABASE_PATH=data/state.sqlite
-UPWORK_ACCESS_TOKEN=
+# Upwork
+UPWORK_CLIENT_ID=
+UPWORK_CLIENT_SECRET=
+UPWORK_REDIRECT_URI=
 UPWORK_TENANT_ID=
+UPWORK_ACCESS_TOKEN=
+
+# Orchestrator
+POLL_INTERVAL_MINUTES=30
+MAX_JOBS_PER_RUN=25
+MIN_CAPABILITY_FIT=0.75
+MAX_DELIVERY_RISK=0.35
+MIN_PROPOSAL_STRENGTH=0.60
+DATABASE_PATH=data/state.sqlite
+
+# Telegram
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
+
+# Safety
 ENABLE_REAL_SUBMISSION=   # set to "true" to enable real Upwork submission
 NODE_ENV=development
 ```
@@ -174,7 +181,7 @@ NODE_ENV=development
 - [x] Unified DB access via Store class
 - [x] Pre-submission gate ordering
 - [x] Submission env guard
-- [x] Dockerization
+- [x] Dockerization (VM-1078 production)
 - [ ] Integration tests
 - [ ] OpenClaw gateway-api surface
 - [ ] Real Upwork GraphQL submission implementation

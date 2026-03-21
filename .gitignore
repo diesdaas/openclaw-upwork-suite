@@ -1,1 +1,38 @@
 node_modules/
+
+# Environment and secrets
+apps/orchestrator/.env
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+data/*.sqlite
+apps/orchestrator/data/*.sqlite
+
+# Docker state volumes
+data/
+state/
+
+# Build artifacts
+dist/
+build/
+
+# OS
+.DS_Store
+*.swp
+*.swo
+
+# Node
+.npm
+.pnpm-store/
+
+# Turbo
+.turbo/
+
+# Logs
+*.log
+logs/

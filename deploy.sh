@@ -51,16 +51,15 @@ fi
 log "[7/8] Auto-committing config changes to GitHub..."
 git add \
   docker-compose.yml \
-  apps/orchestrator/.env \
   apps/orchestrator/Dockerfile \
   apps/orchestrator/entrypoint.sh \
   apps/orchestrator/tsconfig.json \
-  infra/docker/secrets/postgres_password.txt \
   apps/orchestrator/src/ \
   apps/orchestrator/package.json \
   apps/orchestrator/data/ \
   packages/ \
   .npmrc \
+  .gitignore \
   deploy.sh
 
 if git diff --cached --quiet; then
