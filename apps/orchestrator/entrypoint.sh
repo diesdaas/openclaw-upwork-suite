@@ -1,5 +1,5 @@
-#!/bin/bash
-set -euo pipefail
+#!/bin/sh
+set -e
 
 DATA_DIR="${DATA_DIR:-/app/state}"
 mkdir -p "$DATA_DIR"
@@ -13,6 +13,6 @@ for f in capabilities.json search_profiles.json; do
   fi
 done
 
-chown -R 1000:1000 "$DATA_DIR" 2>/dev/null || true
+chown -R node:node /app/state 2>/dev/null || true
 
-exec su-exec 1000:1000 node --import=tsx apps/orchestrator/src/index.ts
+exec su node -c "node --import=tsx /app/apps/orchestrator/src/index.ts"
